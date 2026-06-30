@@ -1254,7 +1254,7 @@ window.syncStudentsFromIndexedDB = async function () {
  * MARKS SYSTEM (FIXED)
  ***********************/
 
-const DOUBLE = ["ENG", "I/SCI", "KIS"];
+const DOUBLE = ["ENG", "I/SCI","I SCI", "KIS"];
 
 
 /* ===================== LOAD MARKS ===================== */
@@ -1444,7 +1444,7 @@ async function saveMarks() {
     const student = students.find(s => s.adm === adm);
     if (!student) continue;
 
-    const isDouble = ["ENG","I/SCI","KIS"].includes(subject);
+    const isDouble = ["ENG","I/SCI","I SCI","KIS"].includes(subject);
 
     let pp1 = 0;
     let pp2 = 0;

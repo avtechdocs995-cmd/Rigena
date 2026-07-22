@@ -1,0 +1,4667 @@
+<!DOCTYPE html>  <html lang="en">    
+<head>    
+<meta charset="UTF-8" />    
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />     <link rel="manifest" href="manifest.json">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<title>Rigena Exam Management System</title>   
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
+<script type="module">  
+ 
+// ✅ ERROR TRACKER (PUT HERE)  
+window.onerror = function(msg, url, line, col, error) {  
+  alert("ERROR: " + msg + " at line: " + line);  
+  console.error(msg, "Line:", line, error);  
+};  
+  
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getDatabase, 
+  ref, 
+  set, 
+  get, 
+  child,
+  remove
+ 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  
+  const firebaseConfig = {
+  apiKey: "AIzaSyC5ZCSJ2bBss1ETt0vaZ7IvYkUw-jITQkA",
+  authDomain: "actech-fees-system.firebaseapp.com",
+  databaseURL: "https://actech-fees-system-default-rtdb.firebaseio.com",
+  projectId: "actech-fees-system",
+  storageBucket: "actech-fees-system.firebasestorage.app",
+  messagingSenderId: "418269419840",
+  appId: "1:418269419840:web:0376bb3d6e4c8bd57702a5",
+  measurementId: "G-VS48KM6S3M"
+};
+
+  const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window.updatePercentage = function (input) {
+
+  const row = input.closest("tr");
+
+  const pp1 = Number(row.querySelector(".pp1")?.value || 0);
+  const pp2 = Number(row.querySelector(".pp2")?.value || 0);
+  const single = Number(row.querySelector(".single")?.value || 0);
+
+  const outOf = Number(document.getElementById("mOutOf")?.value || 100);
+
+  let percentage = 0;
+
+  if (row.querySelector(".pp1") && row.querySelector(".pp2")) {
+    const total = pp1 + pp2;
+    percentage = (total / outOf) * 100;
+  } else {
+    percentage = (single / outOf) * 100;
+  }
+
+  if (percentage > 100) percentage = 100;
+
+  const cell = row.querySelector(".percent-cell");
+  if (cell) cell.innerHTML = percentage.toFixed(1) + "%";
+};
+
+// ✅ RESTORE SCHOOL ID (PUT HERE)
+window.schoolId = localStorage.getItem("schoolId");
+
+window.firebaseDB = db;
+window.firebaseRef = ref;
+window.firebaseSet = set;
+window.firebaseGet = get;
+window.firebaseChild = child;
+window.firebaseRemove = remove;
+
+console.log("Firebase DB ready ✅");
+  
+</script>  
+<style>  
+  :root{    
+    --bg:#f5f7fb;    
+    --card:#ffffff;    
+    --line:#d7deea;    
+    --ink:#1f2937;    
+    --muted:#6b7280;    
+    --primary:#2563eb;    
+    --primary-dark:#1d4ed8;    
+    --success:#16a34a;    
+    --danger:#dc2626;    
+    --shadow:0 10px 24px rgba(15,23,42,.08);    
+    --radius:16px;    
+  }    
+  *{box-sizing:border-box}    
+  body{    
+    margin:0;    
+    padding:16px;    
+    background:var(--bg);    
+    color:var(--ink);    
+    font-family:Arial, Helvetica, sans-serif;    
+  }    
+  h1{    
+    margin:6px 0 14px;    
+    text-align:center;    
+    font-size:28px;    
+    letter-spacing:.4px;    
+  }    
+  .subtle{    
+    color:var(--muted);    
+    text-align:center;    
+    margin-top:-6px;    
+    margin-bottom:16px;    
+    font-size:13px;    
+  }    
+  .nav{    
+    display:flex;    
+    flex-wrap:wrap;    
+    gap:8px;    
+    justify-content:center;    
+    margin-bottom:16px;    
+  }    
+  .nav button,    
+  .toolbar button,    
+  .action-btn,    
+  .primary-btn,    
+  .danger-btn,    
+  .ghost-btn{    
+    border:none;    
+    border-radius:10px;    
+    padding:10px 14px;    
+    cursor:pointer;    
+    font-weight:700;    
+    transition:.15s ease;    
+  }    
+  .nav button{    
+    background:var(--primary);    
+    color:#fff;    
+  }    
+  .nav button:hover,    
+  .toolbar button:hover,    
+  .primary-btn:hover,    
+  .action-btn:hover{    
+    transform:translateY(-1px);    
+    background:var(--primary-dark);    
+  }    
+  .logout-btn {
+  background-color: red !important;
+  color: white !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  opacity: 0.8;
+}
+  .panel{    
+    display:none;    
+    background:var(--card);    
+    border:1px solid var(--line);    
+    border-radius:var(--radius);    
+    box-shadow:var(--shadow);    
+    padding:14px;    
+    margin-bottom:16px;    
+  }    
+  .panel.active{display:block}    
+  .panel h2{    
+    margin:0 0 12px;    
+    font-size:20px;    
+  }    
+  .toolbar{    
+    display:flex;    
+    flex-wrap:wrap;    
+    gap:8px;    
+    align-items:center;    
+    margin-bottom:12px;    
+  }    
+  .inputs{    
+    display:grid;    
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));    
+    gap:8px;    
+    margin-bottom:10px;    
+  }    
+  input, select{    
+    width:100%;    
+    padding:10px 12px;    
+    border:1px solid #cfd6e4;    
+    border-radius:10px;    
+    background:#fff;    
+    color:var(--ink);    
+    outline:none;    
+  }    
+  input:focus, select:focus{    
+    border-color:var(--primary);    
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);    
+  }    
+  table{    
+    width:100%;    
+    border-collapse:collapse;    
+    margin-top:10px;    
+    background:#fff;    
+  }    
+  th,td{    
+    border:1px solid #dbe3ef;    
+    padding:8px 7px;    
+    text-align:center;    
+    font-size:14px;    
+    vertical-align:middle;    
+  }    
+  th{    
+    background:#eef4ff;    
+    position:sticky;    
+    top:0;    
+    z-index:1;    
+  }    
+  .table-wrap table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.table-wrap thead{
+    display:table-header-group;
+}
+
+.table-wrap tfoot{
+    display:table-footer-group;
+}
+
+.table-wrap tr{
+    page-break-inside:avoid;
+}
+
+.table-wrap th,
+.table-wrap td{
+    border:1px solid #000;
+    padding:5px;
+}
+  .table-wrap{    
+    overflow:auto;    
+    border:1px solid var(--line);    
+    border-radius:12px;    
+  }    
+  .muted{    
+    color:var(--muted);    
+    font-size:13px;    
+  }    
+  .row{    
+    display:flex;    
+    flex-wrap:wrap;    
+    gap:10px;    
+    align-items:flex-start;    
+  }    
+  .col{    
+    flex:1 1 320px;    
+    min-width:280px;    
+  }    
+  .school-header{    
+    display:flex;    
+    align-items:center;    
+    gap:12px;    
+    margin-bottom:12px;    
+    padding:10px 12px;    
+    border:1px solid var(--line);    
+    border-radius:14px;    
+    background:linear-gradient(180deg,#fff,#f8fbff);    
+  }    
+  .logo-box{    
+    width:58px;    
+    height:58px;    
+    border-radius:14px;    
+    border:2px dashed #90a4d4;    
+    display:flex;    
+    align-items:center;    
+    justify-content:center;    
+    font-weight:800;    
+    color:#3b82f6;    
+    background:#eff6ff;    
+    flex:0 0 auto;    
+  }    
+  .school-title{    
+    flex:1;    
+    text-align:center;    
+    padding-right:58px;    
+  }    
+  .school-title h3{    
+    margin:0;    
+    font-size:22px;    
+    letter-spacing:.5px;    
+  }    
+  .school-title p{    
+    margin:4px 0 0;    
+    font-size:13px;    
+    color:var(--muted);    
+  }  
+  .pathway-section{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:15px;
+margin-top:10px;
+}
+
+.pathway-table{
+flex:1;
+}
+
+.pathway-graph{
+width:340px;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.pathway-table table{
+width:100%;
+border-collapse:collapse;
+}
+
+.pathway-table th,
+.pathway-table td{
+border:1px solid #000;
+padding:5px;
+text-align:center;
+}
+  .report-card{    
+    border:1px solid #cfd6e4;    
+    border-radius:16px;    
+    padding:12px;    
+    margin-top:14px;    
+    background:#fff;    
+    page-break-after:always;    
+    break-after:page;    
+  }    
+  .report-meta{    
+    display:grid;    
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));    
+    gap:8px;    
+    margin:10px 0 12px;    
+    font-size:14px;    
+  }    
+  .summary-box{    
+    border:1px solid var(--line);    
+    border-radius:14px;    
+    padding:10px;    
+    background:#fbfdff;    
+    margin-top:12px;    
+  }    
+  .badge{    
+    display:inline-block;    
+    padding:4px 8px;    
+    border-radius:999px;    
+    background:#eef4ff;    
+    color:#1d4ed8;    
+    font-size:12px;    
+    font-weight:700;    
+    margin-right:6px;    
+    margin-bottom:6px;    
+  }    
+  .toast{    
+    position:fixed;    
+    right:16px;    
+    bottom:16px;    
+    background:#111827;    
+    color:#fff;    
+    padding:10px 14px;    
+    border-radius:12px;    
+    box-shadow:var(--shadow);    
+    opacity:0;    
+    transform:translateY(10px);    
+    transition:.2s ease;    
+    z-index:9999;    
+    pointer-events:none;    
+  }    
+  .toast.show{    
+    opacity:1;    
+    transform:translateY(0);    
+  }    
+  .actions-cell button{    
+    margin:2px;    
+    padding:7px 10px;    
+    border:none;    
+    border-radius:9px;    
+    color:#fff;    
+    cursor:pointer;    
+    font-weight:700;    
+  }    
+  .edit-btn{background:#0ea5e9}    
+  .delete-btn{background:var(--danger)}    
+  .ok-btn{background:var(--success)}    
+  .ghost-btn{background:#e5e7eb;color:#111827}    
+  .primary-btn{background:var(--primary);color:#fff}    
+  .danger-btn{background:var(--danger);color:#fff}    
+  .small-note{margin:6px 0 0;color:var(--muted);font-size:12px} 
+  /* STREAM COLOURS */
+
+.stream-east{
+    background:#fff200 !important;   /* Bright Yellow */
+    color:#000;
+    font-weight:bold;
+}
+
+.stream-west{
+    background:#ffb6c1 !important;   /* Light Pink */
+    color:#000;
+    font-weight:bold;
+}
+
+.stream-north{
+    background:#87cefa !important;   /* Light Blue */
+    color:#000;
+    font-weight:bold;
+}
+
+.stream-south{
+    background:#ff4d4d !important;   /* Red */
+    color:#fff;
+    font-weight:bold;
+}
+
+.stream-red{
+    background:#d9d9d9 !important;   /* Light Grey */
+    color:#000;
+    font-weight:bold;
+}
+
+.stream-blue{
+    background:#90ee90 !important;   /* Light Green */
+    color:#000;
+    font-weight:bold;
+}
+
+.stream-green{
+    background:#ffa500 !important;   /* Orange */
+    color:#000;
+    font-weight:bold;
+}
+.analysis-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:12px;
+}
+
+/* EXCEEDING EXPECTATIONS - Dark Green */
+.ee1,
+.ee2{
+  background:#00b050 !important;
+  color:#fff !important;
+  font-weight:700;
+}
+
+/* MEETING EXPECTATIONS - Dark Blue */
+.me1,
+.me2{
+  background:#0070c0 !important;
+  color:#fff !important;
+  font-weight:700;
+}
+
+/* APPROACHING EXPECTATIONS - Bright Orange/Gold */
+.ae1,
+.ae2{
+  background:#ffc000 !important;
+  color:#000 !important;
+  font-weight:700;
+}
+
+/* BELOW EXPECTATIONS - Bright Red */
+.be1,
+.be2{
+  background:#ff0000 !important;
+  color:#fff !important;
+  font-weight:700;
+}
+
+/* TOTALS */
+.total-cell{
+  background:#595959 !important;
+  color:#fff !important;
+  font-weight:700;
+}
+.stream-box{
+  margin:15px;
+  padding:10px;
+  border-radius:10px;
+  background:white;
+}
+
+.tag{
+  display:inline-block;
+  background:#198754;
+  color:white;
+  padding:6px 10px;
+  margin:4px;
+  border-radius:20px;
+  font-size:13px;
+}
+.progress-tag{
+  display:block;
+  background:#198754;
+  color:white;
+  padding:8px;
+  margin:5px 0;
+  border-radius:8px;
+  font-size:14px;
+}
+.dashboard-cards{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:10px;
+}
+
+.stat-card{
+  background:#28a745;
+  color:white;
+  width:120px;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+}
+
+.stat-card h3{
+  font-size:14px;
+  margin:2px 0;
+}
+
+.stat-card p{
+  font-size:24px;
+  font-weight:bold;
+  margin:5px 0;
+}
+
+.stat-card span{
+  font-size:12px;
+  background:white;
+  color:#28a745;
+  padding:3px 8px;
+  border-radius:20px;
+}
+/* ================= SIDEBAR MENU ================= */
+
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#menuBtn{
+  font-size:25px;
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+
+.sidebar{
+  position:fixed;
+  top:0;
+  left:-280px;
+  width:260px;
+  height:100%;
+  background:white;
+  padding:15px;
+  box-shadow:2px 0 10px rgba(0,0,0,0.2);
+  z-index:999;
+  overflow-y:auto;
+  transition:0.3s;
+}
+
+
+/* When opened */
+.sidebar.open{
+  left:0;
+}
+
+
+/* Sidebar buttons */
+.sidebar button{
+  width:100%;
+  margin:5px 0;
+  padding:12px;
+  text-align:left;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+
+/* Make page content stay visible */
+body{
+  overflow-x:hidden;
+}
+/* ================= PRINT FIX ================= */  
+@media print{
+  *{
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+}
+@media print {
+
+  body * {
+    visibility: hidden;
+  }
+/* HIDE ANALYSIS DROPDOWNS */
+body.analysis-print #analysis .inputs {
+  display: none !important;
+}
+
+/* HIDE REPORT FILTERS */
+body.report-print #reports .inputs {
+  display: none !important;
+}
+/* HIDE ANALYSIS TITLE */
+body.analysis-print #analysis h2 {
+  display: none !important;
+}
+
+/* HIDE REPORT TITLE */
+body.report-print #reports h2 {
+  display: none !important;
+}
+body.report-print #reports #rClassTeacher,
+body.report-print #reports #rOpeningDate,
+body.report-print #reports #rClosingDate {
+  display: none !important;
+}
+  /* SHOW ONLY ANALYSIS */
+  body.analysis-print #analysis,
+  body.analysis-print #analysis * {
+    visibility: visible;
+  }
+
+  /* SHOW ONLY REPORTS */
+  body.report-print #reports,
+  body.report-print #reports * {
+    visibility: visible;
+  }
+
+  /* POSITION PRINT AREA */
+  #analysis, #reports {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* REMOVE NAV, HEADER, BUTTONS */
+  .nav,
+  .toolbar,
+  h1,
+  .subtle,
+  .no-print {
+    display: none !important;
+  }
+
+  /* REMOVE EXTRA SPACING */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  /* PAGE SETTINGS FOR A4 */
+  @page {
+    size: A4landscape;
+    margin: 10mm;
+  }
+  /* PERFECT REPORT CARD BREAKS */
+  .report-card {
+    page-break-after: always;
+    break-after: page;
+  }
+
+
+.print-page{
+  page-break-after: always;
+  break-after: page;
+  min-height: 95vh;
+  width: 100%;
+}
+
+.print-page:last-child{
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.table-wrap{
+  overflow: visible !important;
+}
+
+table{
+  page-break-inside: auto;
+}
+
+tr{
+  page-break-inside: avoid;
+}
+</style>   
+</style>   
+</head>    
+<body>  
+<div id="loginScreen" style="
+position: fixed;
+inset: 0;
+width: 100vw;
+height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 99999;
+background-color: #ff8c00;
+">
+  
+  <div style="  
+    background:rgba(255,255,255,0.92);  
+    padding:20px;  
+    border-radius:15px;  
+    width:300px;  
+    text-align:center;  
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);  
+  ">  
+  
+  
+    <h2>WELCOME TO RIGENA DOK JUNIOR SCHOOL</h2>  
+    <p style="font-size:12px;color:gray">Login to continue</p>  
+<input id="loginSchool" placeholder="School ID (e.g. SCHOOL_001)" style="width:100%;padding:10px;margin:5px 0">  
+    <input id="loginUser" placeholder="Username" style="width:100%;padding:10px;margin:5px 0">  
+      
+    <input id="loginPass" type="password" placeholder="Password" style="width:100%;padding:10px;margin:5px 0">  
+  
+    <button onclick="login()" style="  
+      width:100%;  
+      padding:10px;  
+      background:#2563eb;  
+      color:white;  
+      border:none;  
+      border-radius:8px;  
+      font-weight:bold;  
+    ">  
+      LOGIN  
+    </button>  
+  
+    <p id="loginError" style="color:red;font-size:12px"></p>  
+<button onclick="goPaystack()" style="  
+  width:100%;  
+  padding:10px;  
+  margin-top:8px;  
+  background:#16a34a;  
+  color:white;  
+  border:none;  
+  border-radius:8px;  
+  font-weight:bold;  
+">  
+  💳 Subscribe to Unlock System  
+</button>  
+  </div>  
+</div>  
+<div class="topbar">
+
+<button id="menuBtn">☰</button>
+<h1 style="color: #0056b3;">WELCOME TO RIGENA DOK JUNIOR SCHOOL EXAM MANAGEMENT SYSTEM</h1>
+</div>
+<div class="subtle">Avtech helpline 0108417217</div>
+<div class="dashboard-cards">
+
+  <div class="stat-card green">
+    <h3>Grade 7</h3>
+    <p id="g7Total">0</p>
+    <span>Learners</span>
+  </div>
+
+  <div class="stat-card green">
+    <h3>Grade 8</h3>
+    <p id="g8Total">0</p>
+    <span>Learners</span>
+  </div>
+
+  <div class="stat-card green">
+    <h3>Grade 9</h3>
+    <p id="g9Total">0</p>
+    <span>Learners</span>
+  </div>
+
+  <div class="stat-card green">
+    <h3>Total Learners</h3>
+    <p id="allTotal">0</p>
+    <span>Registered</span>
+  </div>
+<div class="stat-card green">
+  <h3>Subjects</h3>
+  <p id="totalSubjects">0</p>
+  <span>Registered</span>
+</div>
+<div class="stream-box">
+
+<h3>Stream Summary</h3>
+
+<div id="streamSummary"></div>
+
+</div>
+<div class="stream-box">
+
+<h3>Exam Progress</h3>
+
+<div id="examProgress"></div>
+
+</div>
+</div>
+<div id="sidebar" class="sidebar nav no-print">
+  <button data-panel="students">Register Students</button>  
+  <button data-panel="subjects">Register Subjects</button>  
+  <button data-panel="marks">Marks Entry</button>  
+  <button data-panel="analysis">Analysis</button>  
+  <button data-panel="reports">Report Cards</button>  
+  <button id="subjectLocksBtn" data-panel="locks">
+🔒 Subject Locks
+</button>
+ 
+<button id="downloadBackupBtn" onclick="exportBackup()" style="background-color:#009688; color:white; padding:8px; border:none; margin:3px; border-radius:5px;">
+  Download Backup
+</button>
+
+<button id="backupTableBtn" onclick="showBackupTable()" style="background-color:#795548; color:white; padding:8px; border:none; margin:3px; border-radius:5px;">
+  Backup Table
+</button>
+
+<button id="restoreBackupBtn" onclick="restoreBackup()" style="background-color:#F44336; color:white; padding:8px; border:none; margin:3px; border-radius:5px;">
+  Restore Backup
+</button>
+<button id="extendSubscriptionBtn" onclick="goPaystack()" class="primary-btn">
+  Extend Subscription
+</button>
+<button id="syncStudentsBtn" onclick="syncStudentsFromIndexedDB()">
+📤 Sync Offline Students
+</button>
+<button id="schemesBtn" class="scheme-btn" onclick="openSchemes()">
+  📚 Schemes / Notes
+</button>
+
+<style>
+.scheme-btn{
+    background:#0d6efd;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.scheme-btn:hover{
+    background:#084298;
+}
+</style>
+
+<script>
+function openSchemes(){
+   window.open(
+      "https://script.google.com/macros/s/AKfycbz4wPDkRfr2S2MNDgyCgIYW_hjgzDYI7Db8Ry_svkwhmWTo93Gqxxp1WXPmkjCbCawd/exec",
+      "_blank"
+   );
+}
+</script>
+</button>
+<div id="backupTableArea" class="panel">
+  <h2>Backup Table View</h2>
+  <div id="backupTableOutput"></div>
+</div>
+</div>
+
+
+<input type="file" id="restoreFile" accept=".json" style="display:none;">
+
+<button onclick="logout()" class="logout-btn">
+  Logout
+</button>
+
+<div id="students" class="panel">
+  <h2>Register Student</h2>    
+  <div class="inputs">    
+    <input id="adm" placeholder="Admission Number" autocomplete="off">    
+<input id="name" placeholder="Student Name" autocomplete="off">
+    <select id="grade"></select>    
+    <select id="stream"></select>    
+    <select id="pathway"></select>    
+    <select id="gender">  
+  <option value="">Select Gender</option>  
+  <option value="Male">Male</option>  
+  <option value="Female">Female</option>  
+</select>  
+  </div>    
+  <div class="toolbar no-print">    
+    <button id="saveStudentBtn" class="primary-btn">Save Student</button>    
+    <button id="clearStudentBtn" class="ghost-btn">Clear</button>    
+    <button id="printClassListBtn" class="ghost-btn">Print Class List</button>  
+  </div>    
+  <div class="table-wrap">    
+    <table id="studentTable"></table>    
+  </div>    
+</div>  
+
+</div>
+
+<div id="subjects" class="panel">
+  <h2>Register Subjects</h2>    
+  <div class="inputs">    
+    <input id="subName" placeholder="Subject Name" autocomplete="off">    
+    <select id="subPath"></select>    
+  </div>    
+  <div class="toolbar no-print">    
+    <button id="saveSubjectBtn" class="primary-btn">Add Subject</button>    
+    <button id="clearSubjectBtn" class="ghost-btn">Clear</button>    
+  </div>    
+  <div class="table-wrap">    
+    <table id="subjectTable"></table>    
+  </div>    
+  <div class="small-note">Subjects are linked to a pathway and used automatically in analysis/report cards.</div>    
+</div>  <div id="marks" class="panel">  
+  <h2>Marks Entry</h2>  
+  <div class="inputs">  
+    <select id="mExam"></select>  
+    <select id="mGrade"></select>  
+    <select id="mStream"></select>  
+    <select id="mTerm"></select>  
+    <select id="mYear"></select>  
+    <select id="mSubject"></select> 
+    <div id="subjectLockStatus" style="font-weight:bold;margin:8px;"></div>
+    <input type="number" id="mOutOf" placeholder="Out Of" value="100">
+  </div>  
+  <div class="toolbar no-print">  
+    <button id="loadMarksBtn" class="primary-btn">Load Students</button>  
+    <button id="saveMarksBtn" class="ok-btn">Save Marks</button>  
+  </div>  
+  <div class="small-note" id="marksInfo"></div>  
+  <div class="table-wrap">  
+    <table id="marksTable"></table>  
+  </div>  
+</div> 
+<div id="locks" class="panel">
+
+<h2>🔒 Subject Locks</h2>
+
+<div class="inputs">
+
+<select id="lockGrade"></select>
+
+<select id="lockStream"></select>
+
+<select id="lockExam"></select>
+
+<select id="lockTerm"></select>
+
+<select id="lockYear"></select>
+
+<select id="lockSubject"></select>
+
+</div>
+
+<div class="toolbar">
+
+<button id="lockSubjectBtn" class="primary-btn">
+🔒 Lock Subject
+</button>
+
+<button id="unlockSubjectBtn" class="ghost-btn">
+🔓 Unlock Subject
+</button>
+
+</div>
+
+<div id="lockStatus"></div>
+
+</div> <div id="analysis" class="panel">  
+  <h2>Analysis</h2>    
+  <div class="inputs">    
+    <select id="aExam"></select>    
+    <select id="aGrade"></select>    
+    <select id="aStream"></select>    
+    <select id="aTerm"></select>    
+    <select id="aYear"></select>    
+  </div>    
+  <div class="toolbar no-print">    
+    <button id="generateAnalysisBtn" class="primary-btn">Generate Analysis</button>    
+    <button id="printAnalysisBtn" class="ghost-btn">Print / PDF</button>    
+  </div>    <div id="analysisOut"></div>    <div class="analysis-grid">    
+    <div class="summary-box">    
+      <h3 style="margin-top:0">Top 10 Students</h3>    
+      <div class="table-wrap">    
+        <table id="top10Table"></table>    
+      </div>    
+    </div>  <div class="summary-box">    
+  <h3 style="margin-top:0">Best Student per Subject</h3>    
+  <div class="table-wrap">    
+    <table id="bestSubjectTable"></table>    
+  </div>    
+</div>  
+  
+  </div>    
+</div>  <div id="reports" class="panel">    
+  <h2>Report Cards</h2>    
+  <div class="inputs">    
+    <select id="rGrade"></select>    
+    <select id="rStream"></select>    
+    <select id="rTerm"></select>    
+    <select id="rYear"></select>    
+  </div>   
+  <input id="rClassTeacher" placeholder="Class Teacher (optional)" />
+
+<input type="date" id="rOpeningDate" />
+
+<input type="date" id="rClosingDate" />
+  <div class="toolbar no-print">    
+    <button id="generateReportsBtn" class="primary-btn">Load Report Cards</button>    
+    <button id="printReportsBtn" class="ghost-btn">Print / PDF</button>    
+  </div>    
+<div id="reportsOut"></div>  
+  
+<!-- ADD GRAPHS BELOW REPORTS -->  
+<div id="reportCharts" class="summary-box no-print">  
+  <h3 style="margin-top:0">Performance Graphs</h3>  
+  
+  <canvas id="examComparisonChart"></canvas>  
+  <canvas id="subjectPerformanceChart"></canvas>  
+</div>  
+</div>  <div id="toast" class="toast"></div>  <script> 
+window.toast = function (msg) {
+
+  const t = document.getElementById("toast");
+
+  if (!t) return;
+
+  t.textContent = msg;
+  t.classList.add("show");
+
+  clearTimeout(window._toastTimer);
+
+  window._toastTimer = setTimeout(() => {
+    t.classList.remove("show");
+  }, 1800);
+};
+async function checkSystemAccess() {  
+  const dbRef = firebaseRef(firebaseDB, "system_access");  
+  const snap = await firebaseGet(dbRef);  
+  
+  if (!snap.exists()) return;  
+  
+  const data = snap.val();  
+  const now = Date.now();  
+  
+  const expired = now > data.expiry;  
+  const locked = data.status === "locked";  
+  
+  if (expired || locked) {  
+    lockSystem();  
+  } else {  
+    unlockSystem();  
+  }  
+}  
+function lockSystem() {  
+  
+  document.querySelectorAll("button").forEach(btn => {  
+  
+    if (btn.innerText.toLowerCase().includes("subscribe")) {  
+      btn.disabled = false;  
+      btn.style.opacity = "1";  
+      return;  
+    }  
+  
+    btn.disabled = true;  
+    btn.style.opacity = "0.4";  
+  
+    btn.onclick = () => {  
+      alert("System blocked, renew access");  
+    };  
+  });  
+  
+  showLockMessage();  
+}  
+function unlockSystem() {  
+  document.querySelectorAll("button").forEach(btn => {  
+    btn.disabled = false;  
+    btn.style.opacity = "1";  
+  });  
+  
+  removeLockMessage();  
+}  
+function showLockMessage() {  
+  if (document.getElementById("sysLock")) return;  
+  
+  const div = document.createElement("div");  
+  div.id = "sysLock";  
+  div.innerHTML = "⚠ Access denied term expired renew access to unlock by clicking button below";  
+  div.style = `  
+    position:fixed;  
+    top:0;  
+    left:0;  
+    width:100%;  
+    background:red;  
+    color:white;  
+    padding:10px;  
+    text-align:center;  
+    font-weight:bold;  
+    z-index:999999;  
+  `;  
+  
+  document.body.appendChild(div);  
+}  
+  
+function removeLockMessage() {  
+  const el = document.getElementById("sysLock");  
+  if (el) el.remove();  
+} 
+// ================= MENU CONTROL =================
+
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+
+if(menuBtn && sidebar){
+
+  menuBtn.addEventListener("click", ()=>{
+
+    sidebar.classList.toggle("open");
+
+  });
+
+}
+const el = (id) => document.getElementById(id);  
+document.addEventListener("DOMContentLoaded", () => {    
+  const dbName = "ExamDB";    
+  let db = null;    
+  let editingStudentAdm = null;    
+  let editingSubjectId = null;    
+    
+  const storeReady = new Promise((resolve, reject) => {    
+    const req = indexedDB.open(dbName, 1);    
+    
+    req.onupgradeneeded = (e) => {    
+      const d = e.target.result;    
+    
+      if (!d.objectStoreNames.contains("students")) {    
+        d.createObjectStore("students", { keyPath: "adm" });    
+      }    
+    
+      if (!d.objectStoreNames.contains("subjects")) {    
+        const s = d.createObjectStore("subjects", { keyPath: "id", autoIncrement: true });    
+        s.createIndex("pathway", "pathway", { unique: false });    
+      }    
+    
+      if (!d.objectStoreNames.contains("exams")) {    
+        d.createObjectStore("exams", { keyPath: "key" });    
+      }    
+    
+      if (!d.objectStoreNames.contains("marks")) {    
+        const m = d.createObjectStore("marks", { keyPath: "key" });    
+        m.createIndex("adm", "adm", { unique: false });    
+        m.createIndex("setup", ["grade", "stream", "exam", "term", "year"], { unique: false });    
+      }    
+    };    
+    
+    req.onsuccess = (e) => {    
+      db = e.target.result;    
+      resolve();    
+    };    
+    
+    req.onerror = () => reject(req.error);    
+  });    
+    
+    
+  const gradeBands = (avg) => {
+
+  if (typeof avg !== "number" || isNaN(avg)) return "INVALID";
+
+  if (avg < 0 || avg > 100) return "OUT_OF_RANGE";
+
+  if (avg >= 88) return "EE1";
+  if (avg >= 77) return "EE2";
+  if (avg >= 64) return "ME1";
+  if (avg >= 52) return "ME2";
+  if (avg >= 39) return "AE1";
+  if (avg >= 26) return "AE2";
+  if (avg >= 13) return "BE1";
+  return "BE2";
+};
+  function getComments(grade) {  
+  let teacherComment = "";  
+  let headComment = "";  
+  
+  // Class Teacher Comment  
+  if (["EE1","EE2"].includes(grade)) {  
+    teacherComment = "The learner exceeds expectations.";  
+  } else if (["ME1","ME2"].includes(grade)) {  
+    teacherComment = "The learner meets expectations.";  
+  } else if (["AE1","AE2"].includes(grade)) {  
+    teacherComment = "The learner is approaching expectations.";  
+  } else if (["BE1","BE2"].includes(grade)) {  
+    teacherComment = "The learner is below expectations.";  
+  }  
+  
+  // Headteacher Comment  
+  switch(grade) {  
+    case "EE1":  
+      headComment = "Outstanding performance. Keep it up!";  
+      break;  
+    case "EE2":  
+      headComment = "Excellent work. Maintain the effort.";  
+      break;  
+    case "ME1":  
+      headComment = "Very good performance. Keep it up!";  
+      break;  
+    case "ME2":  
+      headComment = "Good work. Continue working hard.";  
+      break;  
+    case "AE1":  
+      headComment = "Fair performance. Put more effort to improve.";  
+      break;  
+    case "AE2":  
+      headComment = "Satisfactory work. More effort is needed.";  
+      break;  
+    case "BE1":  
+      headComment = "Below expectations. Work harder.";  
+      break;  
+    case "BE2":  
+      headComment = "Poor performance. Immediate improvement is required.";  
+      break;  
+  }  
+  
+  return { teacherComment, headComment };  
+}  
+  const markKey = (o) => [o.adm, o.subject, o.exam, o.grade, o.stream, o.term, o.year].join("|");    
+  const examKey = (o) => [o.grade, o.stream, o.exam, o.term, o.year].join("|");    
+    
+  const reqPromise = (req) => new Promise((resolve, reject) => {    
+    req.onsuccess = () => resolve(req.result);    
+    req.onerror = () => reject(req.error);    
+  });    
+    
+  const txDone = (tx) => new Promise((resolve, reject) => {    
+    tx.oncomplete = () => resolve();    
+    tx.onerror = () => reject(tx.error);    
+    tx.onabort = () => reject(tx.error);    
+  });    
+    
+  const getAll = async (store) => {    
+    const tx = db.transaction(store, "readonly");    
+    return await reqPromise(tx.objectStore(store).getAll());    
+  };    
+    const getByKey = async (store, key) => {    
+  const tx = db.transaction(store, "readonly");    
+  return await reqPromise(tx.objectStore(store).get(key));    
+};    
+
+const put = async (store, value) => {    
+  const tx = db.transaction(store, "readwrite");    
+  tx.objectStore(store).put(value);    
+  await txDone(tx);    
+};    
+
+const add = async (store, value) => {    
+  const tx = db.transaction(store, "readwrite");    
+  tx.objectStore(store).add(value);    
+  await txDone(tx);    
+};    
+
+const del = async (store, key) => {    
+  const tx = db.transaction(store, "readwrite");    
+  tx.objectStore(store).delete(key);    
+  await txDone(tx);    
+};
+
+
+// ONLY AFTER ALL FUNCTIONS ABOVE
+window.getAll = getAll;
+window.getByKey = getByKey;
+window.put = put;
+window.add = add;
+window.del = del;
+window.txDone = txDone;
+window.reqPromise = reqPromise;
+    
+  const clearForm = (ids) => {    
+    ids.forEach(id => {    
+      const node = el(id);    
+      if (!node) return;    
+      if (node.tagName === "SELECT") node.selectedIndex = 0;    
+      else node.value = "";    
+    });    
+  };    
+    
+  const fillSelect = (id, values, placeholder = "Select") => {    
+    const sel = el(id);    
+    sel.innerHTML = "";    
+    sel.add(new Option(placeholder, ""));    
+    values.forEach(v => sel.add(new Option(v, v)));    
+  };    
+    
+  const fillYears = (id) => {    
+    const sel = el(id);    
+    sel.innerHTML = "";    
+    sel.add(new Option("Select", ""));    
+    for (let y = 2026; y <= 2050; y++) sel.add(new Option(String(y), String(y)));    
+  };    
+    
+  const navButtons = document.querySelectorAll(".nav button[data-panel]");    
+  const panels = document.querySelectorAll(".panel");    
+  const showPanel = (name) => {    
+
+  panels.forEach(p => p.classList.remove("active"));    
+
+  el(name).classList.add("active");
+
+
+  // close menu after selecting
+  if(sidebar){
+    sidebar.classList.remove("open");
+  }
+
+};
+    
+  navButtons.forEach(btn => btn.addEventListener("click", () => showPanel(btn.dataset.panel)));    
+    
+  function populateAllSelects() {  
+    const grades = [7,8,9];  
+    const streams = ["East","West","North","South","Red","Blue"];  
+    const pathways = ["STEM","Social Sciences","Arts & Sports"];  
+    const exams = ["Opening","Midterm","Endterm"];  
+    // ===== SUBJECT LOCKS =====
+fillSelect("lockGrade", grades, "Select grade");
+fillSelect("lockStream", streams, "Select stream");
+fillSelect("lockExam", exams, "Select exam");
+fillSelect("lockTerm", [1,2,3], "Select term");
+fillYears("lockYear");
+fillSelect("lockSubject", [], "Select subject");
+  
+    fillSelect("grade", grades, "Select grade");  
+    fillSelect("stream", streams, "Select stream");  
+    fillSelect("pathway", pathways, "Select pathway");  
+    fillSelect("subPath", pathways, "Select pathway");  
+  
+    fillSelect("mExam", exams, "Select exam");  
+    fillSelect("mGrade", grades, "Select grade");  
+    fillSelect("mStream", streams, "Select stream");  
+    fillSelect("mTerm", [1,2,3], "Select term");  
+    fillYears("mYear");  
+  
+    fillSelect("aExam", exams, "Select exam");  
+    fillSelect("aGrade", grades, "Select grade");  
+    fillSelect("aStream", ["Overall", ...streams], "Select stream");  
+    fillSelect("aTerm", [1,2,3], "Select term");  
+    fillYears("aYear");  
+  
+    fillSelect("rGrade", grades, "Select grade");  
+    fillSelect("rStream", streams, "Select stream");  
+    fillSelect("rTerm", [1,2,3], "Select term");  
+    fillYears("rYear");  
+  
+    fillSelect("mSubject", [], "Select subject");  
+  }  
+  async function loadLockSubjects(){
+
+  const subjects = await getAll("subjects");
+
+  fillSelect(
+    "lockSubject",
+    subjects.map(s => s.name),
+    "Select subject"
+  );
+
+}
+
+  
+    
+  /***********************
+ * SAFE DATA CORE
+ * IndexedDB + Firebase Sync
+ ***********************/
+
+
+/* ===================== SUBJECTS ===================== */
+async function loadSubjectsIntoUI() {    
+  const subjects = await getAll("subjects");    
+  const subjectTable = el("subjectTable");    
+  const markSubject = el("mSubject");    
+
+  markSubject.innerHTML = "";    
+  markSubject.add(new Option("Select subject", ""));    
+
+  let html = "<tr><th>Subject</th><th>Pathway</th><th>Action</th></tr>";    
+
+  subjects.forEach(s => {    
+    html += `<tr>    
+      <td>${escapeHtml(s.name)}</td>    
+      <td>${escapeHtml(s.pathway)}</td> 
+      <td class="actions-cell">    
+        <button class="edit-btn" data-subject-action="edit" data-id="${s.id}">Edit</button>    
+        <button class="delete-btn" data-subject-action="delete" data-id="${s.id}">Delete</button>    
+      </td>    
+    </tr>`;    
+
+    markSubject.add(new Option(s.name, s.name));    
+  });    
+
+  subjectTable.innerHTML = html;    
+}
+
+
+/* ===================== STUDENTS ===================== */
+async function loadStudentsIntoUI() {    
+  const students = await getAll("students");    
+
+  let html = "<tr><th>Adm</th><th>Name</th><th>Gender</th><th>Grade</th><th>Stream</th><th>Pathway</th><th>Action</th></tr>";    
+
+  students.forEach(s => {    
+    html += `<tr>    
+      <td>${escapeHtml(s.adm)}</td>    
+      <td>${escapeHtml(s.name)}</td>    
+      <td>${escapeHtml(s.gender || "")}</td>  
+      <td>${escapeHtml(s.grade)}</td>  
+      <td>${escapeHtml(s.stream)}</td>  
+      <td>${escapeHtml(s.pathway)}</td>  
+      <td class="actions-cell">    
+        <button class="edit-btn" data-student-action="edit" data-adm="${escapeAttr(s.adm)}">Edit</button>    
+        <button class="delete-btn" data-student-action="delete" data-adm="${escapeAttr(s.adm)}">Delete</button>    
+      </td>    
+    </tr>`;    
+  });    
+
+  el("studentTable").innerHTML = html;    
+}
+
+
+/* ===================== SAVE STUDENT ===================== */
+async function saveStudent() {    
+  const adm = el("adm").value.trim();    
+  const name = el("name").value.trim();    
+  const grade = el("grade").value;    
+  const stream = el("stream").value;    
+  const pathway = el("pathway").value;  
+  const gender = el("gender").value;    
+
+  if (!adm || !name || !grade || !stream || !pathway || !gender) {  
+    toast("Enter all fields");  
+    return;  
+  }  
+
+  const student = { adm, name, grade, stream, pathway, gender };  
+
+  await put("students", student);  
+
+  /* Firebase save */
+  if (window.firebaseDB && window.schoolId) {  
+    const ref = firebaseRef(
+      firebaseDB,
+      "schools/" + window.schoolId + "/students/" + adm
+    );  
+    await firebaseSet(ref, student);  
+  }  
+
+  editingStudentAdm = null;    
+  el("saveStudentBtn").textContent = "Save Student";    
+  clearForm(["adm","name","grade","stream","pathway"]);    
+
+  await loadStudentsIntoUI();    
+  toast("Student saved"); 
+  await refreshDashboard();
+}
+
+
+/* ===================== DELETE STUDENT ===================== */
+async function deleteStudent(adm) {  
+  if (!confirm("Delete this student and their marks?")) return;  
+
+  await del("students", adm);  
+
+  /* delete local marks */
+  const marks = await getAll("marks");  
+  const tx = db.transaction("marks", "readwrite");  
+  const store = tx.objectStore("marks");  
+
+  marks.filter(m => m.adm === adm).forEach(m => store.delete(m.key));  
+  await txDone(tx);  
+
+  /* delete Firebase student */
+  if (window.firebaseDB && window.schoolId) {  
+    await firebaseSet(
+      firebaseRef(firebaseDB, "schools/" + window.schoolId + "/students/" + adm),
+      null
+    );  
+  }  
+
+  /* delete Firebase marks */
+  if (window.firebaseDB && window.schoolId) {  
+    const marksList = await getAll("marks");  
+
+    for (const m of marksList) {  
+      if (m.adm === adm) {  
+        await firebaseSet(
+          firebaseRef(firebaseDB, "schools/" + window.schoolId + "/marks/" + m.key),
+          null
+        );  
+      }  
+    }  
+  }  
+
+  await loadStudentsIntoUI();  
+  await loadMarksStudents?.();  
+
+  toast("Student deleted successfully");  
+}
+
+
+/* ===================== SYNC FROM FIREBASE ===================== */
+window.syncStudentsFromFirebase = async function () {
+
+  if (!window.firebaseDB || !window.schoolId) return;
+
+  const snapshot = await firebaseGet(
+    firebaseRef(
+      firebaseDB,
+      "schools/" + window.schoolId + "/students"
+    )
+  );
+
+  if (!snapshot.exists()) return;
+
+  const data = snapshot.val();
+
+  const uploads = Object.values(data).map(student =>
+    put("students", student)
+  );
+
+  await Promise.all(uploads);
+
+  console.log("Firebase → IndexedDB sync done");
+};
+
+
+/* ===================== SYNC FROM LOCAL TO FIREBASE ===================== */
+window.syncStudentsFromIndexedDB = async function () {
+
+  if (!window.firebaseDB || !window.schoolId) return;
+
+  const students = await getAll("students");
+
+  const uploads = [];
+
+  for (const s of students) {
+
+    if (!s.adm) continue;
+
+    const ref = firebaseRef(
+      firebaseDB,
+      "schools/" + window.schoolId + "/students/" + s.adm
+    );
+
+    uploads.push(firebaseSet(ref, s));
+
+  }
+
+  await Promise.all(uploads);
+
+  console.log("IndexedDB → Firebase sync done");
+};
+
+
+/* ===================== SAVE SUBJECT ===================== */
+async function saveSubject() {
+
+  const name = el("subName").value.trim();
+  const pathway = el("subPath").value;
+
+  if (!name || !pathway) {
+    toast("Enter all fields");
+    return;
+  }
+
+  const subject = { name, pathway };
+  // ===========================
+  // UPDATE SUBJECT
+  // ===========================
+  if (editingSubjectId) {
+
+    subject.id = editingSubjectId;
+
+    await put("subjects", subject);
+
+
+    if (window.firebaseDB && window.schoolId) {
+      const dbRef = firebaseRef(
+        firebaseDB,
+        "schools/" + window.schoolId + "/subjects/" + editingSubjectId
+      );
+      await firebaseSet(dbRef, subject);
+    }
+
+    editingSubjectId = null;
+    el("saveSubjectBtn").textContent = "Add Subject";
+
+  }
+
+  // ===========================
+  // ADD NEW SUBJECT
+  // ===========================
+  else {
+
+    const id = await add("subjects", subject);
+
+subject.id = id;
+
+
+
+    // ✅ CORRECT SAVE (UNDER SCHOOL ID)
+    if (window.firebaseDB && window.schoolId) {
+      const dbRef = firebaseRef(
+        firebaseDB,
+        "schools/" + window.schoolId + "/subjects/" + id
+      );
+      await firebaseSet(dbRef, subject);
+    }
+  }
+
+  clearForm(["subName", "subPath"]);
+  await loadSubjectsIntoUI();
+  toast("Subject saved");
+  await refreshDashboard();
+}
+    
+  async function editSubject(id) {    
+    const subjects = await getAll("subjects");    
+    const s = subjects.find(x => String(x.id) === String(id));    
+    if (!s) return;    
+    el("subName").value = s.name;    
+    el("subPath").value = s.pathway;    
+    editingSubjectId = s.id;    
+    el("saveSubjectBtn").textContent = "Update Subject";    
+    showPanel("subjects");    
+  }    
+    
+  async function deleteSubject(id) {
+
+  if (!confirm("Delete this subject and its marks?")) return;
+
+  // Delete from IndexedDB
+  await del("subjects", Number(id));
+
+
+  // Delete from Firebase
+  if (window.firebaseDB && window.schoolId) {
+
+    await firebaseSet(
+      firebaseRef(
+        firebaseDB,
+        "schools/" + window.schoolId + "/subjects/" + id
+      ),
+      null
+    );
+
+  }
+
+
+  // Delete related marks
+  const marks = await getAll("marks");
+
+  const tx = db.transaction("marks", "readwrite");
+  const store = tx.objectStore("marks");
+
+  marks
+    .filter(m => Number(m.subjectId) === Number(id))
+    .forEach(m => store.delete(m.key));
+
+  await txDone(tx);
+
+
+  await loadSubjectsIntoUI();
+
+  toast("Subject deleted");
+}
+    
+  /***********************
+ * MARKS SYSTEM (FIXED)
+ ***********************/
+
+const DOUBLE = ["ENG","I/SCI","ISCI", "KIS"];
+
+
+/* ===================== LOAD MARKS ===================== */
+async function loadMarksStudents() {
+
+  const exam = el("mExam").value;
+  const grade = el("mGrade").value;
+  const stream = el("mStream").value;
+  const term = el("mTerm").value;
+  const year = el("mYear").value;
+  const subject = el("mSubject").value;
+
+  if (!exam || !grade || !stream || !term || !year || !subject) {
+    toast("Select exam, grade, stream, term, year and subject");
+    return;
+  }
+
+  const students = await getAll("students");
+
+  if (!students.length) {
+    toast("No students found");
+    return;
+  }
+
+// LOAD FIREBASE MARKS
+try {
+
+  if (window.firebaseDB && window.schoolId) {
+
+    const snapshot = await firebaseGet(
+      firebaseRef(
+        firebaseDB,
+        "schools/" + window.schoolId + "/marks"
+      )
+    );
+
+
+    if (snapshot.exists()) {
+
+      const data = snapshot.val();
+
+      const saves = [];
+
+      for (let key in data) {
+
+        const m = data[key];
+
+        // only selected exam/class/year/term/subject
+        if (
+          m.grade === grade &&
+          m.stream === stream &&
+          m.exam === exam &&
+          m.term === term &&
+          m.year === year &&
+          m.subject === subject
+        ) {
+
+          saves.push(put("marks", m));
+
+        }
+
+      }
+
+      await Promise.all(saves);
+
+    }
+
+  }
+
+} catch (e) {
+
+  console.log("Offline mode");
+
+}
+
+  const marks = await getAll("marks");
+
+  const filteredStudents = students.filter(
+    s => s.grade === grade && s.stream === stream
+  );
+
+  const marksMap = new Map(
+    marks.map(m => [
+      `${m.adm}_${m.subject}_${m.exam}_${m.grade}_${m.stream}_${m.term}_${m.year}`,
+      m
+    ])
+  );
+
+  let html = `
+    <tr>
+      <th>Adm</th>
+      <th>Name</th>
+      <th>Marks</th>
+      <th>%</th>
+    </tr>
+  `;
+
+  filteredStudents.forEach(s => {
+
+    const key = `${s.adm}_${subject}_${exam}_${grade}_${stream}_${term}_${year}`;
+    const existing = marksMap.get(key);
+
+    const isDouble = DOUBLE.includes(subject);
+
+    const pp1 = existing?.pp1 ?? "";
+    const pp2 = existing?.pp2 ?? "";
+    const percentage = existing?.percentage ?? 0;
+
+    html += `
+      <tr>
+        <td data-adm="${escapeAttr(s.adm)}">${escapeHtml(s.adm)}</td>
+        <td>${escapeHtml(s.name)}</td>
+
+        <td>
+          ${
+            isDouble
+              ? `
+                <input class="mark-input pp1"
+                  data-adm="${escapeAttr(s.adm)}"
+                  placeholder="PP1"
+                  value="${escapeAttr(pp1)}"
+                  oninput="updatePercentage(this)">
+
+                <input class="mark-input pp2"
+                  data-adm="${escapeAttr(s.adm)}"
+                  placeholder="PP2"
+                  value="${escapeAttr(pp2)}"
+                  oninput="updatePercentage(this)">
+              `
+              : `
+                <input class="mark-input single"
+                  data-adm="${escapeAttr(s.adm)}"
+                  placeholder="0"
+                  value="${escapeAttr(pp1 || pp2)}"
+                  oninput="updatePercentage(this)">
+              `
+          }
+        </td>
+
+        <td class="percent-cell">
+          ${percentage ? percentage + "%" : "0%"}
+        </td>
+      </tr>
+    `;
+  });
+
+  el("marksTable").innerHTML = html;
+
+  if (!filteredStudents.length) {
+    toast("No students found");
+  }
+}
+
+
+/* ===================== UPDATE PERCENTAGE ===================== */
+function updatePercentage(input) {
+
+  const row = input.closest("tr");
+
+  const pp1 = Number(row.querySelector(".pp1")?.value || 0);
+  const pp2 = Number(row.querySelector(".pp2")?.value || 0);
+  const single = Number(row.querySelector(".single")?.value || 0);
+
+  const outOf = Number(document.getElementById("mOutOf")?.value || 100);
+
+  let percentage = 0;
+
+  // DOUBLE SUBJECTS
+  if (row.querySelector(".pp1") && row.querySelector(".pp2")) {
+
+    const total = pp1 + pp2;
+    percentage = (total / outOf) * 100;
+
+  } 
+  // SINGLE SUBJECT
+  else {
+
+    percentage = (single / outOf) * 100;
+
+  }
+
+  if (percentage > 100) percentage = 100;
+
+  const cell = row.querySelector(".percent-cell");
+  if (cell) {
+    cell.innerHTML = percentage.toFixed(1) + "%";
+  }
+}
+async function updateSubjectLockStatus(){
+
+  const locked = await checkSubjectLock();
+
+  const box = el("subjectLockStatus");
+
+  if(!box) return;
+
+
+  if(locked){
+
+    box.innerHTML =
+    `<span style="color:red;font-weight:bold;">
+    🔒 Locked by Administrator
+    </span>`;
+
+    const btn = el("saveMarksBtn");
+
+    if(btn){
+      btn.disabled = true;
+    }
+
+
+  }else{
+
+    box.innerHTML =
+    `<span style="color:green;font-weight:bold;">
+    🟢 Open for Entry
+    </span>`;
+
+    const btn = el("saveMarksBtn");
+
+    if(btn){
+      btn.disabled = false;
+    }
+
+  }
+
+}
+
+/* ===================== SAVE MARKS ===================== */
+async function saveMarks() {
+  
+
+const locked = await checkSubjectLock();
+
+if(locked){
+
+  toast("🔒 This subject is locked by administrator");
+
+  return;
+}
+  const exam = el("mExam").value;
+  const grade = el("mGrade").value;
+  const stream = el("mStream").value;
+  const term = el("mTerm").value;
+  const year = el("mYear").value;
+  const subject = el("mSubject").value;
+
+  const outOf = Number(el("mOutOf").value) || 100;
+
+  if (!exam || !grade || !stream || !term || !year || !subject) {
+    toast("Select ALL fields");
+    return;
+  }
+
+  const students = await getAll("students");
+  const rows = document.querySelectorAll("#marksTable tr");
+
+  let savedCount = 0;const saveTasks = [];
+
+for (const row of rows) {
+
+  const admEl = row.querySelector("[data-adm]");
+  if (!admEl) continue;
+
+  const adm = admEl.dataset.adm;
+  const student = students.find(s => s.adm === adm);
+  if (!student) continue;
+
+  const isDouble = ["ENG","ISCI","I/SCI","KIS"].includes(subject);
+
+  let pp1 = 0;
+  let pp2 = 0;
+  let percentage = 0;
+
+  if (isDouble) {
+
+    pp1 = Number(row.querySelector(".pp1")?.value || 0);
+    pp2 = Number(row.querySelector(".pp2")?.value || 0);
+
+    percentage = ((pp1 + pp2) / outOf) * 100;
+
+  } else {
+
+    pp1 = Number(row.querySelector(".single")?.value || 0);
+
+    percentage = (pp1 / outOf) * 100;
+
+  }
+
+  if (percentage > 100) percentage = 100;
+
+
+  const record = {
+
+    key: `${adm}_${subject}_${exam}_${term}_${year}`,
+
+    adm,
+    name: student.name,
+    subject,
+    exam,
+    grade,
+    stream,
+    term,
+    year,
+    pp1,
+    pp2,
+    outOf,
+    percentage: Number(percentage.toFixed(1))
+
+  };
+
+
+  // Local save
+  saveTasks.push(
+    put("marks", record)
+  );
+
+
+  // Firebase save
+  if (window.firebaseDB && window.schoolId) {
+
+    const ref = firebaseRef(
+      firebaseDB,
+      "schools/" + window.schoolId + "/marks/" + record.key
+    );
+
+    saveTasks.push(
+      firebaseSet(ref, record)
+    );
+
+  }
+
+  savedCount++;
+
+}
+
+
+// wait for all saves
+await Promise.all(saveTasks);
+  // ✅ THIS ALWAYS RUNS NOW
+  toast(`Marks saved successfully ✅ (${savedCount})`);
+  await loadExamProgress();
+}
+    
+  async function generateAnalysis() {
+
+  const exam = el("aExam").value;
+  const grade = el("aGrade").value;
+  const stream = el("aStream").value;
+  const term = el("aTerm").value;
+  const year = el("aYear").value;
+
+  if (!exam || !grade || !stream || !term || !year) {
+    toast("Select exam, grade, stream, term and year");
+    return;
+  }
+
+  // ================= STUDENTS =================
+  const students = (await getAll("students"))
+    .filter(s =>
+      s.grade === grade &&
+      (stream === "Overall" || s.stream === stream)
+    );
+
+  const subjectsAll = await getAll("subjects");
+const marksAll = await getAll("marks");
+
+// FILTER ONLY SELECTED YEAR, TERM, GRADE AND STREAM
+const filteredMarks = marksAll.filter(m =>
+  m.grade === grade &&
+  m.term === term &&
+  m.year === year &&
+  (stream === "Overall" || m.stream === stream)
+);
+
+const subjectNames = subjectsAll.map(s => s.name);
+const rows = [];
+
+  // ================= SAFE EXAM TOTAL FUNCTION =================
+  function examTotal(adm, examName) {
+
+    let total = 0;
+
+    subjectNames.forEach(sub => {
+
+      const m = filteredMarks.find(x =>
+        x.adm === adm &&
+        x.subject === sub &&
+        x.exam === examName &&
+        x.grade === grade &&
+        (stream === "Overall" || x.stream === stream) &&
+        x.term === term &&
+        x.year === year
+      );
+
+      total += Number(m?.percentage ?? m?.score ?? 0);
+
+    });
+
+    return total;
+  }
+
+  // ================= MAIN LOOP =================
+  students.forEach(s => {
+
+    const scores = {};
+    let total = 0;
+
+    subjectNames.forEach(sub => {
+
+      const m = filteredMarks.find(x =>
+        x.adm === s.adm &&
+        x.subject === sub &&
+        x.exam === exam &&
+        x.grade === grade &&
+        (stream === "Overall" || x.stream === stream) &&
+        x.term === term &&
+        x.year === year
+      );
+
+      const mark = Number(m?.percentage ?? m?.score ?? 0);
+
+      scores[sub] = mark;
+      total += mark;
+
+    });
+
+    const avg = subjectNames.length
+      ? total / subjectNames.length
+      : 0;
+
+    // ================= DEVIATIONS =================
+    const opening = examTotal(s.adm, "Opening");
+    const midterm = examTotal(s.adm, "Midterm");
+    const endterm = examTotal(s.adm, "Endterm");
+
+    const devOpeningMid = midterm - opening;
+    const devMidEnd = endterm - midterm;
+    const devOverall = endterm - opening;
+
+    rows.push({
+      adm: s.adm,
+      name: s.name,
+      gender: s.gender,
+      stream: s.stream,
+      scores,
+      total,
+      avg,
+      g: gradeBands(avg),
+      devOpeningMid,
+      devMidEnd,
+      devOverall
+    });
+
+  });
+
+  // ================= RANKING =================
+  rows.sort((a, b) => b.avg - a.avg || b.total - a.total);
+
+  rows.forEach((r, i) => r.rank = i + 1);
+
+  // ================= HEADER =================
+  const header = `
+    <div class="school-header">
+
+      <div class="logo-box">
+        <img src="logo.jpg" style="width:80px;height:80px;">
+      </div>
+
+      <div class="school-title">
+        <h3>RIGENA DOK JUNIOR SCHOOL</h3>
+
+        <p>
+          ${
+            stream === "Overall"
+            ? `OVERALL ANALYSIS REPORT - ${grade}`
+            : `${grade} ${stream} ANALYSIS REPORT`
+          }
+        </p>
+
+        <small>
+          ${exam} | ${term} | ${year}
+        </small>
+      </div>
+
+    </div>
+  `;
+
+  // ================= MAIN TABLE =================
+  let table = `
+<div class="table-wrap">
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+
+<thead>
+<tr>
+  <th>Pos</th>
+  <th>Adm</th>
+  <th>Name</th>
+  <th>Stream</th>
+`;
+
+// subject headers
+subjectNames.forEach(s => {
+  table += `<th>${escapeHtml(s)}%</th>`;
+});
+
+table += `
+  <th>Total</th>
+  <th>Avg</th>
+  <th>Grade</th>
+  <th>O-M</th>
+  <th>M-E</th>
+  <th>O-E</th>
+</tr>
+</thead>
+
+<tbody>
+`;
+
+rows.forEach(r => {
+
+  table += `
+  <tr>
+    <td>${r.rank}</td>
+    <td>${escapeHtml(r.adm)}</td>
+    <td>${escapeHtml(r.name)}</td>
+    <td>${escapeHtml(r.stream)}</td>
+  `;
+
+  subjectNames.forEach(s => {
+    const mark = r.scores[s] ?? 0;
+    const g = gradeBands(mark);
+
+    table += `
+      <td>
+        ${mark.toFixed(0)}${g}
+      </td>
+    `;
+  });
+
+  table += `
+    <td>${r.total.toFixed(1)}</td>
+    <td>${r.avg.toFixed(1)}%</td>
+    <td>${r.g}</td>
+
+    <td style="color:${r.devOpeningMid >= 0 ? 'green' : 'red'}">
+      ${r.devOpeningMid >= 0 ? '+' : ''}
+      ${r.devOpeningMid.toFixed(1)}
+    </td>
+
+    <td style="color:${r.devMidEnd >= 0 ? 'green' : 'red'}">
+      ${r.devMidEnd >= 0 ? '+' : ''}
+      ${r.devMidEnd.toFixed(1)}
+    </td>
+
+    <td style="color:${r.devOverall >= 0 ? 'green' : 'red'}">
+      ${r.devOverall >= 0 ? '+' : ''}
+      ${r.devOverall.toFixed(1)}
+    </td>
+
+  </tr>
+  `;
+});
+
+table += `
+</tbody>
+</table>
+</div>
+`;
+
+
+
+// ================= SUBJECT MEANS =================
+let subjectMeansHTML = `
+<div class="summary-box">
+  <h3>Subject Means</h3>
+
+  <div class="table-wrap">
+  <table>
+
+  <tr>
+    <th>Subject</th>
+    <th>Opening Mean</th>
+    <th>Midterm Mean</th>
+    <th>Endterm Mean</th>
+  </tr>
+`;
+
+subjectNames.forEach(sub => {
+
+  const openingRows = filteredMarks.filter(m =>
+    m.exam === "Opening" &&
+    m.grade === grade &&
+    (stream === "Overall" || m.stream === stream)
+  );
+
+  const midRows = filteredMarks.filter(m =>
+    m.exam === "Midterm" &&
+    m.grade === grade &&
+    (stream === "Overall" || m.stream === stream)
+  );
+
+  const endRows = filteredMarks.filter(m =>
+    m.exam === "Endterm" &&
+    m.grade === grade &&
+    (stream === "Overall" || m.stream === stream)
+  );
+
+  let openTotal = 0, openCount = 0;
+  let midTotal = 0, midCount = 0;
+  let endTotal = 0, endCount = 0;
+
+  openingRows.forEach(m => {
+    if (m.subject === sub) {
+      openTotal += Number(m.percentage || 0);
+      openCount++;
+    }
+  });
+
+  midRows.forEach(m => {
+    if (m.subject === sub) {
+      midTotal += Number(m.percentage || 0);
+      midCount++;
+    }
+  });
+
+  endRows.forEach(m => {
+    if (m.subject === sub) {
+      endTotal += Number(m.percentage || 0);
+      endCount++;
+    }
+  });
+
+  const openMean = openCount ? openTotal / openCount : 0;
+  const midMean = midCount ? midTotal / midCount : 0;
+  const endMean = endCount ? endTotal / endCount : 0;
+
+  subjectMeansHTML += `
+    <tr>
+      <td>${escapeHtml(sub)}</td>
+      <td>${openMean.toFixed(2)}</td>
+      <td>${midMean.toFixed(2)}</td>
+      <td>${endMean.toFixed(2)}</td>
+    </tr>
+  `;
+});
+
+subjectMeansHTML += `
+  </table>
+  </div>
+</div>
+`;
+
+
+// ================= MSS =================
+
+let totalAll = 0;
+let countAll = 0;
+
+filteredMarks.forEach(m => {
+
+  if (
+    m.grade === grade &&
+    (stream === "Overall" || m.stream === stream)
+  ) {
+    totalAll += Number(m.percentage || 0);
+    countAll++;
+  }
+
+});
+
+const MSS = countAll ? totalAll / countAll : 0;
+
+let mssHTML = `
+<div class="summary-box">
+  <h3>Overall MSS</h3>
+
+  <div>
+    <b>Total Marks:</b> ${totalAll.toFixed(0)}<br>
+    <b>Average:</b> ${MSS.toFixed(2)}
+  </div>
+
+  <span class="badge">
+    ${gradeBands ? gradeBands(MSS) : ""}
+  </span>
+</div>
+`;
+// ================= MOST IMPROVED LEARNERS =================
+
+let improvedHTML = `
+<div class="summary-box">
+
+<h3>TOP 3 MOST IMPROVED PER SUBJECT</h3>
+
+<div class="table-wrap">
+<table>
+
+<tr>
+  <th>Subject</th>
+  <th>Rank</th>
+  <th>Name</th>
+  <th>Stream</th>
+  <th>Opening</th>
+  <th>Midterm</th>
+  <th>Endterm</th>
+  <th>Improvement</th>
+</tr>
+`;
+
+subjectNames.forEach(sub => {
+
+  const subjectImproved = [];
+
+  students.forEach(s => {
+
+    const openingMark = filteredMarks.find(m =>
+      m.adm === s.adm &&
+      m.subject === sub &&
+      m.exam === "Opening"
+    );
+
+    const midtermMark = filteredMarks.find(m =>
+      m.adm === s.adm &&
+      m.subject === sub &&
+      m.exam === "Midterm"
+    );
+
+    const endtermMark = filteredMarks.find(m =>
+      m.adm === s.adm &&
+      m.subject === sub &&
+      m.exam === "Endterm"
+    );
+
+    const hasOpening = !!openingMark;
+    const hasMidterm = !!midtermMark;
+    const hasEndterm = !!endtermMark;
+
+    const opening = Number(openingMark?.percentage || 0);
+    const midterm = Number(midtermMark?.percentage || 0);
+    const endterm = Number(endtermMark?.percentage || 0);
+
+    let improvement = 0;
+
+    if (hasOpening && hasMidterm && hasEndterm) {
+      improvement = endterm - opening;
+    } else if (hasOpening && hasMidterm) {
+      improvement = midterm - opening;
+    } else if (hasMidterm && hasEndterm) {
+      improvement = endterm - midterm;
+    } else if (hasOpening && hasEndterm) {
+      improvement = endterm - opening;
+    } else {
+      improvement = 0;
+    }
+
+    subjectImproved.push({
+      name: s.name,
+      stream: s.stream,
+      opening,
+      midterm,
+      endterm,
+      improvement
+    });
+
+  });
+
+  // Highest improvement first
+  subjectImproved.sort((a, b) => b.improvement - a.improvement);
+
+  subjectImproved.slice(0, 3).forEach((r, i) => {
+
+    improvedHTML += `
+    <tr>
+      <td>${escapeHtml(sub)}</td>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(r.name)}</td>
+      <td>${escapeHtml(r.stream)}</td>
+      <td>${r.opening.toFixed(1)}</td>
+      <td>${r.midterm.toFixed(1)}</td>
+      <td>${r.endterm.toFixed(1)}</td>
+      <td style="color:${r.improvement >= 0 ? 'green' : 'red'};font-weight:bold">
+        ${r.improvement >= 0 ? '+' : ''}${r.improvement.toFixed(1)}
+      </td>
+    </tr>
+    `;
+
+  });
+
+});
+
+improvedHTML += `
+</table>
+</div>
+</div>
+
+
+<h3>TOP 3 MOST IMPROVED PER STREAM</h3>
+
+<div class="table-wrap">
+<table>
+
+<tr>
+  <th>Stream</th>
+  <th>Rank</th>
+  <th>Name</th>
+  <th>Improvement</th>
+</tr>
+`;
+
+const streamSet = [...new Set(rows.map(r => r.stream))];
+
+streamSet.forEach(strm => {
+
+  const streamImproved = [];
+
+  students
+    .filter(s => s.stream === strm)
+    .forEach(s => {
+
+      const opening = examTotal(s.adm, "Opening");
+      const midterm = examTotal(s.adm, "Midterm");
+      const endterm = examTotal(s.adm, "Endterm");
+
+      const hasOpening = opening > 0;
+      const hasMidterm = midterm > 0;
+      const hasEndterm = endterm > 0;
+
+      let improvement = 0;
+
+      if (hasOpening && hasMidterm && hasEndterm) {
+        improvement = endterm - opening;
+      } else if (hasOpening && hasMidterm) {
+        improvement = midterm - opening;
+      } else if (hasMidterm && hasEndterm) {
+        improvement = endterm - midterm;
+      } else if (hasOpening && hasEndterm) {
+        improvement = endterm - opening;
+      }
+
+      streamImproved.push({
+        name: s.name,
+        improvement
+      });
+
+    });
+
+  streamImproved.sort((a, b) => b.improvement - a.improvement);
+
+  streamImproved.slice(0, 3).forEach((r, i) => {
+
+    improvedHTML += `
+    <tr>
+      <td>${escapeHtml(strm)}</td>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(r.name)}</td>
+      <td style="color:${r.improvement >= 0 ? 'green' : 'red'};font-weight:bold">
+        ${r.improvement >= 0 ? '+' : ''}${r.improvement.toFixed(1)}
+      </td>
+    </tr>
+    `;
+
+  });
+
+});
+
+improvedHTML += `
+</table>
+</div>
+
+
+<h3>OVERALL TOP 3 MOST IMPROVED LEARNERS</h3>
+
+<div class="table-wrap">
+<table>
+
+<tr>
+  <th>Rank</th>
+  <th>Name</th>
+  <th>Stream</th>
+  <th>Improvement</th>
+</tr>
+`;
+
+const overallImproved = [];
+
+students.forEach(s => {
+
+  const opening = examTotal(s.adm, "Opening");
+  const midterm = examTotal(s.adm, "Midterm");
+  const endterm = examTotal(s.adm, "Endterm");
+
+  const hasOpening = opening > 0;
+  const hasMidterm = midterm > 0;
+  const hasEndterm = endterm > 0;
+
+  let improvement = 0;
+
+  if (hasOpening && hasMidterm && hasEndterm) {
+    improvement = endterm - opening;
+  } else if (hasOpening && hasMidterm) {
+    improvement = midterm - opening;
+  } else if (hasMidterm && hasEndterm) {
+    improvement = endterm - midterm;
+  } else if (hasOpening && hasEndterm) {
+    improvement = endterm - opening;
+  }
+
+  overallImproved.push({
+    name: s.name,
+    stream: s.stream,
+    improvement
+  });
+
+});
+
+overallImproved.sort((a, b) => b.improvement - a.improvement);
+
+overallImproved.slice(0, 3).forEach((r, i) => {
+
+  improvedHTML += `
+  <tr>
+    <td>${i + 1}</td>
+    <td>${escapeHtml(r.name)}</td>
+    <td>${escapeHtml(r.stream)}</td>
+    <td style="color:${r.improvement >= 0 ? 'green' : 'red'};font-weight:bold">
+      ${r.improvement >= 0 ? '+' : ''}${r.improvement.toFixed(1)}
+    </td>
+  </tr>
+  `;
+
+});
+
+improvedHTML += `
+</table>
+</div>
+</div>
+`;
+  // ================= TOP 10 =================
+  const top10 = rows.slice(0, 10);
+
+  let top10Html = `
+    <tr>
+      <th>Pos</th>
+      <th>Name</th>
+      <th>Stream</th>
+      <th>Avg</th>
+      <th>Grade</th>
+    </tr>
+  `;
+
+  top10.forEach(r => {
+
+    top10Html += `
+      <tr>
+        <td>${r.rank}</td>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${escapeHtml(r.stream)}</td>
+        <td>${r.avg.toFixed(1)}%</td>
+        <td>${r.g}</td>
+      </tr>
+    `;
+  });
+
+  let top10HTML = `
+<div class="summary-box">
+<h3>TOP 10 STUDENTS</h3>
+<div class="table-wrap">
+<table>
+${top10Html}
+</table>
+</div>
+</div>
+`;
+
+  // ================= BEST PER SUBJECT =================
+  const best = subjectNames.map(sub => {
+
+    let bestRow = null;
+
+    rows.forEach(r => {
+
+      const val = r.scores[sub] || 0;
+
+      if (!bestRow || val > bestRow.score) {
+
+        bestRow = {
+          subject: sub,
+          name: r.name,
+          adm: r.adm,
+          stream: r.stream,
+          score: val
+        };
+      }
+    });
+
+    return bestRow;
+
+  });
+
+  let bestHtml = `
+    <tr>
+      <th>Subject</th>
+      <th>Name</th>
+      <th>Stream</th>
+      <th>Best</th>
+    </tr>
+  `;
+
+  best.forEach(b => {
+
+    bestHtml += `
+      <tr>
+        <td>${escapeHtml(b.subject)}</td>
+        <td>${escapeHtml(b.name)}</td>
+        <td>${escapeHtml(b.stream)}</td>
+        <td>${b.score.toFixed(1)}%</td>
+      </tr>
+    `;
+  });
+
+  let bestSubjectHTML = `
+<div class="summary-box">
+<h3>BEST STUDENT PER SUBJECT</h3>
+<div class="table-wrap">
+<table>
+${bestHtml}
+</table>
+</div>
+</div>
+`;
+
+  // ================= GENDER =================
+  let genderStats = {
+
+    Boys: {
+      EE1:0, EE2:0,
+      ME1:0, ME2:0,
+      AE1:0, AE2:0,
+      BE1:0, BE2:0,
+      total:0
+    },
+
+    Girls:{
+      EE1:0, EE2:0,
+      ME1:0, ME2:0,
+      AE1:0, AE2:0,
+      BE1:0, BE2:0,
+      total:0
+    }
+  };
+
+  rows.forEach(r => {
+
+    let g = (r.gender || "").toLowerCase();
+
+    if (g === "male") g = "Boys";
+    else if (g === "female") g = "Girls";
+    else return;
+
+    if (genderStats[g][r.g] !== undefined) {
+      genderStats[g][r.g]++;
+    }
+
+    genderStats[g].total++;
+
+  });
+
+  let totalRow = {
+    EE1:0, EE2:0,
+    ME1:0, ME2:0,
+    AE1:0, AE2:0,
+    BE1:0, BE2:0,
+    total:0
+  };
+
+  ["EE1","EE2","ME1","ME2","AE1","AE2","BE1","BE2"]
+  .forEach(k => {
+
+    totalRow[k] =
+      genderStats.Boys[k] +
+      genderStats.Girls[k];
+  });
+
+  totalRow.total =
+    genderStats.Boys.total +
+    genderStats.Girls.total;
+
+  let genderHTML = `
+    <div class="summary-box">
+
+      <h3>Gender Performance</h3>
+
+      <div class="table-wrap">
+
+      <table>
+
+        <tr>
+          <th>Gender</th>
+          <th>EE1</th>
+          <th>EE2</th>
+          <th>ME1</th>
+          <th>ME2</th>
+          <th>AE1</th>
+          <th>AE2</th>
+          <th>BE1</th>
+          <th>BE2</th>
+          <th>Total</th>
+        </tr>
+
+        <tr>
+          <td>Boys</td>
+
+          ${
+            ["EE1","EE2","ME1","ME2","AE1","AE2","BE1","BE2"]
+            .map(k => `<td>${genderStats.Boys[k]}</td>`)
+            .join("")
+          }
+
+          <td>${genderStats.Boys.total}</td>
+        </tr>
+
+        <tr>
+          <td>Girls</td>
+
+          ${
+            ["EE1","EE2","ME1","ME2","AE1","AE2","BE1","BE2"]
+            .map(k => `<td>${genderStats.Girls[k]}</td>`)
+            .join("")
+          }
+
+          <td>${genderStats.Girls.total}</td>
+        </tr>
+
+        <tr>
+
+          <td><b>Total</b></td>
+
+          ${
+            ["EE1","EE2","ME1","ME2","AE1","AE2","BE1","BE2"]
+            .map(k => `<td>${totalRow[k]}</td>`)
+            .join("")
+          }
+
+          <td>${totalRow.total}</td>
+
+        </tr>
+
+      </table>
+      </div>
+    </div>
+  `;
+
+// ================= OUTPUT =================
+// ================= STREAM SUMMARY =================
+
+const streamBase =
+  stream === "Overall"
+    ? [...new Set(rows.map(r => r.stream))]
+    : [stream];
+
+// rank streams by overall mean
+const streamList = streamBase
+  .map(strm => {
+
+    const streamRows = rows.filter(r => r.stream === strm);
+
+    let grandTotal = 0;
+    let totalMarks = 0;
+
+    subjectNames.forEach(sub => {
+
+      let subTotal = 0;
+
+      streamRows.forEach(r => {
+        const mark = r.scores[sub] || 0;
+        subTotal += mark;
+        totalMarks += mark;
+      });
+
+      const mean = streamRows.length
+        ? subTotal / streamRows.length
+        : 0;
+
+      grandTotal += mean;
+    });
+
+    const overallMean = subjectNames.length
+      ? grandTotal / subjectNames.length
+      : 0;
+
+    return {
+      stream: strm,
+      totalMarks,
+      overallMean
+    };
+
+  })
+  .sort((a, b) => b.overallMean - a.overallMean);
+
+// ================= TABLE START =================
+
+let summaryHTML = `
+
+<div class="report-card stream-summary-page">
+
+  <div class="school-header">
+
+    <div class="logo-box">
+      <img src="logo.jpg"
+           style="width:80px;height:80px;object-fit:contain;">
+    </div>
+
+    <div class="school-title">
+
+      <h3>RIGENA DOK JUNIOR SCHOOL</h3>
+
+      <p>
+        GRADE ${grade}
+        ${stream === "Overall" ? "OVERALL" : stream}
+        STREAM SUMMARY REPORT
+      </p>
+
+      <small>
+        ${exam} EXAM |
+        TERM ${term} |
+        YEAR ${year}
+      </small>
+
+    </div>
+
+  </div>
+
+  <h2 style="text-align:center;font-size:18px;">
+    STREAM PERFORMANCE SUMMARY
+  </h2>
+
+<div class="table-wrap">
+<table class="summary-table">
+
+<tr>
+  <th>NO</th>
+  <th>STREAM</th>
+`;
+
+subjectNames.forEach(sub => {
+  summaryHTML += `
+    <th>${escapeHtml(sub)} AVG</th>
+    <th>PL</th>
+  `;
+});
+
+summaryHTML += `
+  <th>TOTAL MARKS</th>
+</tr>
+`;
+
+// ================= STREAM ROWS =================
+
+streamList.forEach((item, index) => {
+
+  const strm = item.stream;
+  const streamRows = rows.filter(r => r.stream === strm);
+
+  let grandTotal = 0;
+  let streamTotalMarks = 0;
+
+  summaryHTML += `
+  <tr>
+    <td>${index + 1}</td>
+    <td><b>${escapeHtml(strm)}</b></td>
+  `;
+
+  subjectNames.forEach(sub => {
+
+    let subTotal = 0;
+
+    streamRows.forEach(r => {
+      const mark = r.scores[sub] || 0;
+      subTotal += mark;
+      streamTotalMarks += mark;
+    });
+
+    const mean = streamRows.length
+      ? subTotal / streamRows.length
+      : 0;
+
+    grandTotal += mean;
+
+    summaryHTML += `
+      <td>${mean.toFixed(2)}</td>
+      <td class="${gradeBands(mean).toLowerCase()}">
+        ${gradeBands(mean)}
+      </td>
+    `;
+  });
+
+  const overallMean = subjectNames.length
+    ? grandTotal / subjectNames.length
+    : 0;
+
+  summaryHTML += `
+    <td><b>${streamTotalMarks.toFixed(0)}</b></td>
+  </tr>
+  `;
+});
+
+// ================= COMBINED ROW =================
+
+summaryHTML += `
+<tr style="font-weight:bold;background:#fff3cd;">
+  <td>-</td>
+  <td>COMBINED</td>
+`;
+
+subjectNames.forEach(sub => {
+
+  let total = 0;
+  let count = 0;
+
+  rows.forEach(r => {
+    total += r.scores[sub] || 0;
+    count++;
+  });
+
+  const avg = count ? total / count : 0;
+
+  summaryHTML += `
+    <td>${avg.toFixed(2)}</td>
+    <td class="${gradeBands(avg).toLowerCase()}">
+      ${gradeBands(avg)}
+    </td>
+  `;
+});
+
+summaryHTML += `
+  <td><b>-</b></td>
+</tr>
+`;
+
+// ================= BOYS =================
+
+summaryHTML += `
+<tr style="font-weight:bold;background:#d9edf7;">
+  <td>-</td>
+  <td>BOYS</td>
+`;
+
+subjectNames.forEach(sub => {
+
+  let total = 0;
+  let count = 0;
+
+  rows.forEach(r => {
+    const g = (r.gender || "").toLowerCase();
+    if (g === "male" || g === "m" || g === "boy") {
+      total += r.scores[sub] || 0;
+      count++;
+    }
+  });
+
+  const avg = count ? total / count : 0;
+
+  summaryHTML += `
+    <td>${avg.toFixed(2)}</td>
+    <td>${gradeBands(avg)}</td>
+  `;
+});
+
+summaryHTML += `
+  <td><b>-</b></td>
+</tr>
+`;
+
+// ================= GIRLS =================
+
+summaryHTML += `
+<tr style="font-weight:bold;background:#f2dede;">
+  <td>-</td>
+  <td>GIRLS</td>
+`;
+
+subjectNames.forEach(sub => {
+
+  let total = 0;
+  let count = 0;
+
+  rows.forEach(r => {
+    const g = (r.gender || "").toLowerCase();
+    if (g === "female" || g === "f" || g === "girl") {
+      total += r.scores[sub] || 0;
+      count++;
+    }
+  });
+
+  const avg = count ? total / count : 0;
+
+  summaryHTML += `
+    <td>${avg.toFixed(2)}</td>
+    <td>${gradeBands(avg)}</td>
+  `;
+});
+
+summaryHTML += `
+  <td><b>-</b></td>
+</tr>
+`;
+
+summaryHTML += `
+</table>
+</div>
+</div>
+`;
+ el("analysisOut").innerHTML = `
+
+<div class="print-page">
+${header}
+${table}
+${mssHTML}
+</div>
+
+<div class="print-page">
+${genderHTML}
+</div>
+
+<div class="print-page">
+${subjectMeansHTML}
+</div>
+
+<div class="print-page">
+${improvedHTML}
+</div>
+
+<div class="print-page">
+${summaryHTML}
+</div>
+
+<div class="print-page">
+${top10HTML}
+</div>
+
+<div class="print-page">
+${bestSubjectHTML}
+</div>
+
+`;
+  generateCharts(rows, subjectNames);
+
+  if (!rows.length) {
+    toast("No students found");
+  }
+
+}
+    function levelMap(g){
+
+  const levels = {
+    "EE1":"8 Points",
+    "EE2":"7 Points ",
+    "ME1":"6 Points",
+    "ME2":"5 Points",
+    "AE1":"4 Points",
+    "AE2":"3 Points",
+    "BE1":"2 Points",
+    "BE2":"1 Point"
+  };
+
+  return levels[g] || "";
+}
+  
+async function generateReports() {    
+    const grade = el("rGrade").value;    
+    const stream = el("rStream").value;    
+    const term = el("rTerm").value;    
+    const year = el("rYear").value;    
+
+    const classTeacher = el("rClassTeacher").value || "Not Assigned";
+    const openingDate = el("rOpeningDate").value || "Not Set";
+    const closingDate = el("rClosingDate").value || "Not Set";
+
+    if (!grade || !stream || !term || !year) {    
+        toast("Select grade, stream, term and year");    
+        return;    
+    }    
+
+    const allGradeStudents = (await getAll("students"))
+    .filter(s => s.grade === grade);
+
+const students = allGradeStudents
+    .filter(s => s.stream === stream);
+
+    const subjectsAll = await getAll("subjects");    
+    const marksAll = await getAll("marks");    
+
+    // ✅ RANK STORAGE
+    const openingScores = [];
+    const midtermScores = [];
+    const endtermScores = [];
+
+    // ✅ FIRST LOOP (COLLECT TOTALS FOR RANKING)
+    allGradeStudents.forEach(s => {
+
+        let openTotal = 0;
+        let midTotal = 0;
+        let endTotal = 0;
+
+        const subjList = subjectsAll.filter(x => x.pathway === s.pathway);
+
+        subjList.forEach(sub => {
+
+            const open = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Opening" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );
+
+            const mid = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Midterm" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );
+
+            const end = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Endterm" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );
+
+            if (open) openTotal += Number(open.percentage || 0);
+if (mid) midTotal += Number(mid.percentage || 0);
+if (end) endTotal += Number(end.percentage || 0);
+
+        });
+
+        openingScores.push({ adm: s.adm, total: openTotal });
+        midtermScores.push({ adm: s.adm, total: midTotal });
+        endtermScores.push({ adm: s.adm, total: endTotal });
+
+    });
+
+    // ✅ SORT FOR RANKING
+    openingScores.sort((a,b)=>b.total - a.total);
+    midtermScores.sort((a,b)=>b.total - a.total);
+    endtermScores.sort((a,b)=>b.total - a.total);
+
+    // ✅ RANK FUNCTION
+    function getRank(list, adm) {
+        const index = list.findIndex(x => x.adm === adm);
+        return index === -1 ? "" : index + 1;
+    }
+
+    const cards = [];    
+
+    // ✅ MAIN REPORT LOOP
+    students.forEach(s => {    
+
+        const subjList = subjectsAll    
+            .filter(x => x.pathway === s.pathway)    
+            .sort((a, b) => a.name.localeCompare(b.name));    
+
+        const subjectRows = [];    
+
+        const openingRank = getRank(openingScores, s.adm);
+        const midtermRank = getRank(midtermScores, s.adm);
+        const endtermRank = getRank(endtermScores, s.adm);
+
+        let overallTotal = 0;    
+        let overallCount = 0;   
+
+        let openingTotal = 0;
+        let midtermTotal = 0;
+        let endtermTotal = 0;
+// ===== PATHWAY TOTALS =====
+let stemTotal = 0;
+let socialTotal = 0;
+let artsTotal = 0;
+        subjList.forEach(sub => {    
+
+            const open = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Opening" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );    
+
+            const mid = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Midterm" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );    
+
+            const end = marksAll.find(m =>
+                m.adm === s.adm &&
+                m.subject === sub.name &&
+                m.exam === "Endterm" &&
+                m.grade === grade &&
+                m.stream === stream &&
+                m.term === term &&
+                m.year === year
+            );    
+
+            const vals = [open, mid, end].map(x => {
+    if (!x) return null;
+    const mark = Number(x.percentage);
+    return Number.isFinite(mark) ? mark : null;
+});
+
+            if (vals[0] !== null) openingTotal += vals[0];
+            if (vals[1] !== null) midtermTotal += vals[1];
+            if (vals[2] !== null) endtermTotal += vals[2];
+
+            const present = vals.filter(v => v !== null);    
+
+            const subTotal = present.reduce((a, b) => a + b, 0);    
+            const subAvg = present.length ? subTotal / present.length : 0;    
+            const subGrade = present.length ? gradeBands(subAvg) : "";    
+
+            overallTotal += subTotal;    
+            overallCount += present.length;    
+// ===== PATHWAY SCORES =====
+const code = sub.name.toUpperCase();
+
+if (["MAT","ISCI","AGRI","PTS"].includes(code)) {
+    stemTotal += subAvg;
+}
+
+if (["ENG","KIS","SST","CRE"].includes(code)) {
+    socialTotal += subAvg;
+}
+
+if (["CAS"].includes(code)) {
+    artsTotal += subAvg;
+}
+            subjectRows.push({    
+                subject: sub.name,    
+                open: vals[0],    
+                mid: vals[1],    
+                end: vals[2],    
+                total: subTotal,    
+                avg: subAvg,    
+                grade: subGrade    
+            });    
+
+        });    
+        // ================= PATHWAY PROFILE =================
+
+const stemScore = stemTotal;
+const socialScore = socialTotal;
+const artsScore = artsTotal;
+
+const stemPercent = (stemScore / 400) * 100;
+const socialPercent = (socialScore / 400) * 100;
+const artsPercent = (artsScore / 100) * 100;
+// ===============================
+// STRONGEST PATHWAY
+// ===============================
+
+let strongestPathway = "STEM";
+let strongestPercent = stemPercent;
+
+if (socialPercent > strongestPercent) {
+    strongestPathway = "SOCIAL SCIENCES";
+    strongestPercent = socialPercent;
+}
+
+if (artsPercent > strongestPercent) {
+    strongestPathway = "ARTS & SPORTS";
+    strongestPercent = artsPercent;
+}
+
+
+// ===============================
+// OVERALL PERFORMANCE
+// ===============================
+
+const overallAvg = overallCount ? overallTotal / overallCount : 0;
+
+const overallGrade = gradeBands(overallAvg);
+
+const { teacherComment, headComment } = getComments(overallGrade);
+
+        let body = `    
+        <div class="report-card">    
+
+            <div class="school-header">    
+                <div class="logo-box">    
+                    <img src="logo.jpg" style="width:100%; height:100%; object-fit:contain;">    
+                </div>    
+                <div class="school-title">    
+                    <h3>RIGENA DOK JUNIOR SCHOOL</h3>    
+                    <p>ASSESSMENT REPORT</p>    <p>CONTACT:+2547 MOTTO:Education for life:primarysch@gmail.com</p> 
+                </div>    
+            </div>    
+
+            <div class="report-meta">   
+                <div><b>Class Teacher:</b> ${escapeHtml(classTeacher)}</div>
+                <div><b>Name:</b> ${escapeHtml(s.name)}</div>    
+                <div><b>Admission No:</b> ${escapeHtml(s.adm)}</div>    
+                <div><b>Grade:</b> ${escapeHtml(s.grade)}</div>    
+                <div><b>Stream:</b> ${escapeHtml(s.stream)}</div>    
+                <div><b>Pathway:</b> ${escapeHtml(s.pathway)}</div>    
+                <div><b>Term:</b> ${escapeHtml(term)} &nbsp; <b>Year:</b> ${escapeHtml(year)}</div>    
+            </div>    
+
+            <div class="table-wrap">    
+                <table>    
+                    <tr>    
+<th>Subject</th>
+
+<th>Opening</th>
+<th>Grade</th>
+<th>Points</th>
+
+<th>Midterm</th>
+<th>Grade</th>
+<th>Points</th>
+
+<th>Endterm</th>
+<th>Grade</th>
+<th>Points</th>
+
+<th>Total</th>
+<th>Average</th>
+<th>Grade</th>
+        `;    
+subjectRows.forEach(r => {
+
+    body += `
+        <tr>
+
+            <td style="text-align:left">${escapeHtml(r.subject)}</td>
+
+            <td>${r.open !== null ? r.open.toFixed(2) : ""}</td>
+            <td>${r.open !== null ? gradeBands(r.open) : ""}</td>
+            <td>${r.open !== null ? levelMap(gradeBands(r.open)) : ""}</td>
+
+            <td>${r.mid !== null ? r.mid.toFixed(2) : ""}</td>
+            <td>${r.mid !== null ? gradeBands(r.mid) : ""}</td>
+            <td>${r.mid !== null ? levelMap(gradeBands(r.mid)) : ""}</td>
+
+            <td>${r.end !== null ? r.end.toFixed(2) : ""}</td>
+            <td>${r.end !== null ? gradeBands(r.end) : ""}</td>
+            <td>${r.end !== null ? levelMap(gradeBands(r.end)) : ""}</td>
+
+            <td>${r.total.toFixed(2)}</td>
+            <td>${r.avg.toFixed(2)}</td>
+            <td>${r.grade}</td>
+
+        </tr>`;
+});
+
+body += `
+
+<tr style="font-weight:bold;background:#e8f5e9;">
+
+    <td><b>TOTAL MARKS</b></td>
+
+    <td><b>${openingTotal.toFixed(2)}</b></td>
+    <td></td>
+    <td></td>
+
+    <td><b>${midtermTotal.toFixed(2)}</b></td>
+    <td></td>
+    <td></td>
+
+    <td><b>${endtermTotal.toFixed(2)}</b></td>
+    <td></td>
+    <td></td>
+
+    <td><b>${overallTotal.toFixed(2)}</b></td>
+
+    <td><b>${overallAvg.toFixed(2)}</b></td>
+
+    <td><b>${overallGrade}</b></td>
+
+</tr>
+
+`;
+        body += `
+</table>
+</div>
+
+<div class="summary-box">
+
+<h3>Pathway Performance Profile</h3>
+
+<table>
+
+<tr>
+<th>Pathway</th>
+<th>Learning Areas</th>
+<th>Score</th>
+<th>Performance</th>
+</tr>
+
+<tr>
+<td>STEM</td>
+<td>MAT, ISCI, AGRI, PTS</td>
+<td>${stemScore.toFixed(1)}/400</td>
+<td>${stemPercent.toFixed(1)}%</td>
+</tr>
+
+<tr>
+<td>Arts & Sports</td>
+<td>CAS</td>
+<td>${artsScore.toFixed(1)}/100</td>
+<td>${artsPercent.toFixed(1)}%</td>
+</tr>
+
+<tr>
+<td>Social Sciences</td>
+<td>ENG, KIS, SST, CRE</td>
+<td>${socialScore.toFixed(1)}/400</td>
+<td>${socialPercent.toFixed(1)}%</td>
+</tr>
+
+</table>
+
+<br>
+
+<b>Strongest Pathway:</b>
+${strongestPathway} (${strongestPercent.toFixed(1)}%)
+
+</div>
+
+<div class="summary-box">  
+
+    <span class="badge">
+        Overall Total: ${overallTotal.toFixed(2)}
+    </span>    
+
+    <span class="badge">
+        Overall Average: ${overallAvg.toFixed(2)}
+    </span>    
+
+    <span class="badge">
+        Overall Grade: ${overallGrade}
+    </span>    
+
+    <span class="badge">
+        Opening Rank: ${openingRank}
+    </span>
+
+    <span class="badge">
+        Midterm Rank: ${midtermRank}
+    </span>
+
+    <span class="badge">
+        Endterm Position: ${endtermRank}/${allGradeStudents.length}
+    </span>
+
+    <span class="badge">
+        Opening Total: ${openingTotal.toFixed(2)}
+    </span>
+
+    <span class="badge">
+        Midterm Total: ${midtermTotal.toFixed(2)}
+    </span>
+
+    <span class="badge">
+        Endterm Total: ${endtermTotal.toFixed(2)}
+    </span>
+
+</div>
+                <div class="small-note">  
+                    <b>Class Teacher's Remarks:</b> ${teacherComment}    
+                    <br><br>  
+                    <b>Head Teacher's Remarks:</b> ${headComment}    
+                    <br><br>  
+                    <b>Head Teacher Name:</b> MD JULIANA GETUBO
+                    <br><br>  
+                    <b>Opening Date:</b> ${escapeHtml(openingDate)}  
+                    <br>  
+                    <b>Closing Date:</b> ${escapeHtml(closingDate)}   
+                </div>  
+            </div>    
+
+        </div>    
+        `;    
+
+        cards.push(body);    
+    });    
+
+    el("reportsOut").innerHTML = cards.join("");    
+
+    if (!cards.length) toast("No students found for the selected class");    
+}
+    window.generateReports = generateReports;
+
+window.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("generateReportsBtn");
+
+    if (!btn) {  
+        console.error("generateReportsBtn not found");  
+        return;  
+    }  
+
+    btn.addEventListener("click", generateReports);
+});
+
+function escapeHtml(v) {
+    return String(v ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+}
+    
+  function escapeAttr(v) {    
+    return escapeHtml(v).replaceAll("\n", " ");    
+  }    
+    
+  // Student table actions    
+  el("studentTable").addEventListener("click", async (e) => {    
+    const btn = e.target.closest("button[data-student-action]");    
+    if (!btn) return;    
+    const adm = btn.dataset.adm;    
+    const action = btn.dataset.studentAction;    
+    if (action === "edit") return editStudent(adm);    
+    if (action === "delete") return deleteStudent(adm);    
+  });    
+    
+  // Subject table actions    
+  el("subjectTable").addEventListener("click", async (e) => {    
+    const btn = e.target.closest("button[data-subject-action]");    
+    if (!btn) return;    
+    const id = btn.dataset.id;    
+    const action = btn.dataset.subjectAction;    
+    if (action === "edit") return editSubject(id);    
+    if (action === "delete") return deleteSubject(id);    
+  });    
+    
+  // Buttons    
+  async function printClassList() {  
+  
+  const grade = el("grade").value;  
+  const stream = el("stream").value;  
+  
+  if (!grade || !stream) {  
+    toast("Select grade and stream first");  
+    return;  
+  }  
+  
+  const students = await getAll("students");  
+  
+  const filtered = students.filter(s =>   
+    s.grade === grade && s.stream === stream  
+  );  
+  
+  if (!filtered.length) {  
+    toast("No students found");  
+    return;  
+  }  
+  
+  let html = `  
+  <div class="report-card">  
+    <div class="school-header">  
+      <div class="logo-box">  
+        <img src="logo.jpg" style="width:100%;height:100%;object-fit:contain;">  
+      </div>  
+      <div class="school-title">  
+        <h3>RIGENA DOK JUNIOR SCHOOL</h3>  
+        <p>CLASS LIST</p>  
+      </div>  
+    </div>  
+  
+    <div class="summary-box">  
+      <span class="badge">Grade: ${grade}</span>  
+      <span class="badge">Stream: ${stream}</span>  
+      <span class="badge">Total: ${filtered.length}</span>  
+    </div>  
+  
+    <div class="table-wrap">  
+      <table>  
+<tr>  
+  <th>No</th>  
+  <th>Adm</th>  
+  <th>Name</th>  
+  <th>Gender</th>  
+  <th>MAT</th>  
+  <th>ENG PP1</th> 
+  <th>ENG PP2</th>
+  <th>KIS PP1</th> 
+  <th>KIS PP2</th>
+  <th>SCI PP1</th>  
+  <th>SCI PP2</th>
+  <th>AGR</th>  
+  <th>SST</th>  
+  <th>CRE</th>  
+  <th>CAS</th>  
+  <th>PT</th>  
+</tr>  
+  `;  
+  
+  filtered.forEach((s, i) => {  
+  html += `  
+    <tr>  
+      <td>${i + 1}</td>  
+      <td>${escapeHtml(s.adm)}</td>  
+      <td style="text-align:left">${escapeHtml(s.name)}</td>  
+      <td>${escapeHtml(s.gender)}</td>  
+  
+      <td></td>  
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>  
+      <td></td>  
+      <td></td>  
+      <td></td>  
+      <td></td>  
+      <td></td>  
+      <td></td>  
+      <td></td>  
+    </tr>  
+  `;  
+});  
+  
+  html += `  
+      </table>  
+    </div>  
+  </div>  
+  `;  
+  
+  // SHOW IN ANALYSIS AREA FOR PRINT  
+  el("analysisOut").innerHTML = html;  
+  
+  // PRINT MODE  
+  showPanel("analysis");  
+  
+  document.body.classList.add("analysis-print");  
+  
+  setTimeout(() => {  
+    window.print();  
+  }, 300);  
+}  
+  el("saveStudentBtn").addEventListener("click", saveStudent);    
+  el("printClassListBtn").addEventListener("click", printClassList);  
+  el("clearStudentBtn").addEventListener("click", () => {    
+    editingStudentAdm = null;    
+    el("saveStudentBtn").textContent = "Save Student";    
+    clearForm(["adm","name","grade","stream","pathway","gender"]);  
+  });    
+    
+  el("saveSubjectBtn").addEventListener("click", saveSubject);    
+  el("clearSubjectBtn").addEventListener("click", () => {    
+    editingSubjectId = null;    
+    el("saveSubjectBtn").textContent = "Add Subject";    
+    clearForm(["subName","subPath"]);    
+  });    
+    el("lockSubjectBtn").addEventListener("click", lockSubject);
+    el("unlockSubjectBtn").addEventListener("click", unlockSubject);
+  el("loadMarksBtn").addEventListener("click", loadMarksStudents);    
+  el("saveMarksBtn").addEventListener("click", saveMarks);    
+    ["mGrade","mStream","mExam","mTerm","mYear","mSubject"]
+.forEach(id=>{
+
+  const item = el(id);
+
+  if(item){
+
+    item.addEventListener(
+      "change",
+      updateSubjectLockStatus
+    );
+
+  }
+
+});
+  el("generateAnalysisBtn").addEventListener("click", generateAnalysis);    
+  el("printAnalysisBtn").addEventListener("click", () => {    
+  showPanel("analysis");    
+    
+  document.body.classList.remove("report-print");    
+  document.body.classList.add("analysis-print");    
+    
+  setTimeout(() => {    
+    window.print();    
+  }, 300);    
+});    
+    
+  el("generateReportsBtn").addEventListener("click", generateReports);    
+  el("printReportsBtn").addEventListener("click", () => {    
+  showPanel("reports");    
+    
+  document.body.classList.remove("analysis-print");    
+  document.body.classList.add("report-print");    
+    
+  setTimeout(() => {    
+    window.print();    
+  }, 300);    
+});    
+  async function syncFromFirebase() {  
+  if (!window.firebaseDB) return;  
+  
+  const dbRef = firebaseRef(firebaseDB);  
+  
+  // ===== STUDENTS =====  
+  const studentsSnap = await firebaseGet(firebaseChild(dbRef, "schools/" + window.schoolId + "/students"));  
+  if (studentsSnap.exists()) {  
+    const data = studentsSnap.val();  
+  
+    for (let key in data) {  
+      if (data[key] && data[key].adm) {  
+        await put("students", data[key]);  
+      }  
+    }  
+  }  
+  
+  // ===== SUBJECTS =====  
+  const subjectsSnap = await firebaseGet(firebaseChild(dbRef, "schools/" + window.schoolId + "/subjects"));  
+  if (subjectsSnap.exists()) {  
+    const data = subjectsSnap.val();  
+  
+    for (let key in data) {  
+      const subject = data[key];  
+      if (subject && subject.name) {  
+        await put("subjects", subject);  
+      }  
+    }  
+  }  
+  
+  // ===== MARKS =====  
+  const marksSnap = await firebaseGet(firebaseChild(dbRef, "schools/" + window.schoolId + "/marks"));  
+  if (marksSnap.exists()) {  
+    const data = marksSnap.val();  
+  
+    for (let key in data) {  
+      const mark = data[key];  
+      if (!mark || !mark.adm) continue;  
+  
+      if (!mark.key) {  
+        mark.key =  
+          mark.adm + "_" +  
+          mark.subject + "_" +  
+          mark.exam + "_" +  
+          mark.term + "_" +  
+          mark.year;  
+      }  
+  
+      await put("marks", mark);  
+    }  
+  }  
+  
+  console.log("SYNC COMPLETE ✅");  
+}  
+  async function bootstrap() {  
+  await checkSystemAccess();  
+  
+  populateAllSelects();   // MUST ALWAYS BE FIRST (UI FIRST)  
+  await syncFromFirebase();
+
+await loadStudentsIntoUI();
+await loadSubjectsIntoUI();
+await loadLockSubjects();
+await refreshDashboard();
+
+toast("System ready (Synced)");
+}  
+  
+  bootstrap().catch(err => {    
+    console.error(err);    
+    toast("System error: check console");    
+  });    
+    
+});    
+async function loadSubjectCount(){
+
+  const dbRef = firebaseRef(firebaseDB);
+
+  const snap = await firebaseGet(
+    firebaseChild(
+      dbRef,
+      "schools/" + window.schoolId + "/subjects"
+    )
+  );
+
+  let total = 0;
+
+  if(snap.exists()){
+    total = Object.keys(snap.val()).length;
+  }
+
+  el("totalSubjects").textContent = total;
+
+}
+async function lockSubject(){
+
+  const grade = el("lockGrade").value;
+  const stream = el("lockStream").value;
+  const exam = el("lockExam").value;
+  const term = el("lockTerm").value;
+  const year = el("lockYear").value;
+  const subject = el("lockSubject").value;
+
+  if(!grade || !stream || !exam || !term || !year || !subject){
+    toast("Select all fields");
+    return;
+  }
+
+  const key = `${grade}_${stream}_${exam}_${term}_${year}_${subject}`;
+
+  await firebaseSet(
+    firebaseRef(
+      firebaseDB,
+      `schools/${window.schoolId}/locks/${key}`
+    ),
+    {
+      grade,
+      stream,
+      exam,
+      term,
+      year,
+      subject,
+      locked: true,
+      lockedAt: Date.now()
+    }
+  );
+
+  el("lockStatus").innerHTML =
+    `<span style="color:red;font-weight:bold;">🔒 Subject Locked</span>`;
+
+  toast("Subject locked successfully");
+
+}
+async function unlockSubject(){
+
+  console.log("Unlock clicked");
+
+  const grade = el("lockGrade").value;
+  const stream = el("lockStream").value;
+  const exam = el("lockExam").value;
+  const term = el("lockTerm").value;
+  const year = el("lockYear").value;
+  const subject = el("lockSubject").value;
+
+
+  console.log({
+    grade,
+    stream,
+    exam,
+    term,
+    year,
+    subject
+  });
+
+
+  if(!grade || !stream || !exam || !term || !year || !subject){
+
+    toast("Select all fields");
+
+    return;
+
+  }
+
+
+  const key = `${grade}_${stream}_${exam}_${term}_${year}_${subject}`;
+
+
+  console.log("Removing:", key);
+
+
+  const lockRef = firebaseRef(
+    firebaseDB,
+    `schools/${window.schoolId}/locks/${key}`
+  );
+
+
+  try {
+
+
+    await window.firebaseRemove(lockRef);
+
+
+    console.log("Removed successfully");
+
+
+    // confirm deletion
+    const check = await firebaseGet(lockRef);
+
+
+    console.log(
+      "After remove:",
+      check.exists()
+    );
+
+
+    if(!check.exists()){
+
+      el("lockStatus").innerHTML =
+      `
+      <span style="color:green;font-weight:bold;">
+      🔓 Subject Unlocked
+      </span>
+      `;
+
+      toast("Subject unlocked successfully");
+
+
+    }else{
+
+      toast("Unlock failed. Lock still exists");
+
+    }
+
+
+  } catch(error){
+
+
+    console.error("Unlock error:", error);
+
+    toast("Unlock error");
+
+
+  }
+
+}
+async function checkSubjectLock(){
+
+  const grade = el("mGrade").value;
+  const stream = el("mStream").value;
+  const exam = el("mExam").value;
+  const term = el("mTerm").value;
+  const year = el("mYear").value;
+  const subject = el("mSubject").value;
+
+
+  if(!grade || !stream || !exam || !term || !year || !subject){
+    return false;
+  }
+
+
+  const key = `${grade}_${stream}_${exam}_${term}_${year}_${subject}`;
+
+
+  const lockSnap = await firebaseGet(
+    firebaseRef(
+      firebaseDB,
+      `schools/${window.schoolId}/locks/${key}`
+    )
+  );
+
+
+  return lockSnap.exists() && lockSnap.val().locked === true;
+
+}
+async function loadStreamSummary(){
+
+  const students = await getAll("students");
+
+  const streams = {};
+
+  students.forEach(s=>{
+
+    const key = `${s.grade} ${s.stream}`;
+
+    if(!streams[key]){
+      streams[key]=0;
+    }
+
+    streams[key]++;
+
+  });
+
+
+  let html="";
+
+  Object.keys(streams).forEach(k=>{
+
+    html += `
+      <div class="tag">
+        ${k}: ${streams[k]}
+      </div>
+    `;
+
+  });
+
+
+  el("streamSummary").innerHTML = html;
+
+}
+async function loadExamProgress(){
+
+  const marks = await getAll("marks");
+
+  const exams = [
+    "Opening",
+    "Midterm",
+    "Endterm"
+  ];
+
+  let html = "";
+
+  exams.forEach(exam=>{
+
+    const count = marks.filter(m =>
+      m.exam === exam
+    ).length;
+
+
+    html += `
+      <div class="progress-tag">
+        ${exam}: ${count} marks entered
+      </div>
+    `;
+
+  });
+
+
+  el("examProgress").innerHTML = html;
+
+}
+async function loadLearnerDashboard(){
+
+  const dbRef = firebaseRef(firebaseDB);
+
+  const snap = await firebaseGet(
+    firebaseChild(
+      dbRef,
+      "schools/" + window.schoolId + "/students"
+    )
+  );
+
+
+  let g7 = 0;
+  let g8 = 0;
+  let g9 = 0;
+  let total = 0;
+
+
+  if(snap.exists()){
+
+    const students = snap.val();
+
+
+    Object.values(students).forEach(s=>{
+
+      total++;
+
+
+      if(String(s.grade) === "7"){
+        g7++;
+      }
+
+      if(String(s.grade) === "8"){
+        g8++;
+      }
+
+      if(String(s.grade) === "9"){
+        g9++;
+      }
+
+    });
+
+  }
+
+
+  el("g7Total").textContent = g7;
+  el("g8Total").textContent = g8;
+  el("g9Total").textContent = g9;
+  el("allTotal").textContent = total;
+
+}
+async function refreshDashboard(){
+
+  await loadLearnerDashboard();
+
+  await loadSubjectCount();
+
+  await loadStreamSummary();
+
+  await loadExamProgress();
+}
+refreshDashboard();
+function generateCharts(rows, subjectNames) {  
+  
+
+  // ===== EXAM COMPARISON (Top 5 students) =====  
+  const top = rows.slice(0, 5);  
+  
+  const labels = top.map(s => s.name);  
+  const data = top.map(s => s.avg);  
+  
+  const ctx1 = document.getElementById("examComparisonChart").getContext("2d");  
+  
+  new Chart(ctx1, {  
+    type: "bar",  
+    data: {  
+      labels: labels,  
+      datasets: [{  
+        label: "Average Marks",  
+        data: data  
+      }]  
+    },  
+    options: {  
+      responsive: true  
+    }  
+  });  
+  
+  // ===== SUBJECT PERFORMANCE (Class Mean per subject) =====  
+  const subjectMeans = subjectNames.map(sub => {  
+    let total = 0;  
+    let count = 0;  
+  
+    rows.forEach(r => {  
+      total += (r.scores[sub] || 0);  
+      count++;  
+    });  
+  
+    return count ? total / count : 0;  
+  });  
+  
+  const ctx2 = document.getElementById("subjectPerformanceChart").getContext("2d");  
+  
+  new Chart(ctx2, {  
+    type: "line",  
+    data: {  
+      labels: subjectNames,  
+      datasets: [{  
+        label: "Subject Mean",  
+        data: subjectMeans  
+      }]  
+    },  
+    options: {  
+      responsive: true  
+    }  
+  });  
+}  
+function goPaystack() {  
+  window.open("https://paystack.shop/pay/g7-qwgemas", "_blank");  
+}  
+async function login() {
+  const schoolId = document.getElementById("loginSchool").value.trim();
+  const user = document.getElementById("loginUser").value.trim(); // admin / teacher
+  const pass = document.getElementById("loginPass").value.trim();
+  const errorBox = document.getElementById("loginError");
+
+  if (!schoolId || !user || !pass) {
+    errorBox.innerText = "Fill all fields";
+    return;
+  }
+
+  try {
+    const now = Date.now();
+
+const infoRef = firebaseRef(
+  firebaseDB,
+  "schools/" + schoolId + "/info"
+);
+
+const snap = await firebaseGet(infoRef);
+
+if (!snap.exists()) {
+
+  await firebaseSet(
+  firebaseRef(firebaseDB, "schools/" + schoolId + "/info"),
+  {
+    createdAt: now,
+    status: "active",
+    expiry: now + (365 * 24 * 60 * 60 * 1000)
+  }
+);
+
+await firebaseSet(
+  firebaseRef(firebaseDB, "schools/" + schoolId + "/users"),
+  {
+    admin: {
+      password: "001",
+      status: "active"
+    },
+    teacher: {
+      password: "1234",
+      status: "active"
+    }
+  }
+);
+
+  console.log("School created ✅");
+}
+
+
+// ONLY LOAD USERS FOR LOGIN
+const userSnap = await firebaseGet(
+  firebaseRef(
+    firebaseDB,
+    "schools/" + schoolId + "/users"
+  )
+);
+
+const users = userSnap.val() || {};
+
+const data = {
+  status: snap.exists() ? snap.val().status : "active",
+  expiry: snap.exists() ? snap.val().expiry : now + (365 * 24 * 60 * 60 * 1000),
+  users: users
+};
+
+
+    // 🔒 SCHOOL BLOCK / EXPIRY CHECK
+    if (data.status === "locked" || now > data.expiry) {
+      errorBox.innerText = "SYSTEM HAS BLOCKED ACCESS RENEW or Contact admin avtechdocs995@gmail.com Thank you for using AVTECH.";
+      return;
+    }
+
+    // ❌ USER NOT FOUND
+    if (!data.users || !data.users[user]) {
+      errorBox.innerText = "User not found";
+      return;
+    }
+
+    const dbUser = data.users[user];
+
+    // ❌ WRONG PASSWORD
+    if (dbUser.password !== pass) {
+      errorBox.innerText = "Wrong password";
+      return;
+    }
+
+    // 🚫 LOCKED USER
+    if (dbUser.status === "locked") {
+      errorBox.innerText = "Account locked";
+      return;
+    }
+
+    // ✅ SUCCESS LOGIN
+    window.schoolId = schoolId;
+    window.userRole = user;
+
+    localStorage.setItem("schoolId", schoolId);
+
+    document.getElementById("loginScreen").style.display = "none";
+
+    applyRolePermissions();  
+  
+    toast("Login successful: " + user);  
+  
+  } catch (err) {  
+    console.error(err);  
+    errorBox.innerText = "System error";  
+  }  
+}
+
+window.login = login;
+function applyRolePermissions() {
+  const role = window.userRole;
+
+  // FIRST: hide everything by default (important)
+  const allPanels = [
+    "students",
+    "subjects",
+    "analysis",
+    "reports",
+    "settings",
+    "dashboard"
+  ];
+
+  allPanels.forEach(name => {
+    const el = document.querySelector(`[data-panel="${name}"]`);
+    if (el) el.style.display = "none";
+  });
+
+  // LOCK BUTTONS
+  const buttons = [
+  "saveStudentBtn",
+  "saveSubjectBtn",
+  "addUserBtn",
+  "generateAnalysisBtn",
+  "extendSubscriptionBtn",
+  "downloadBackupBtn",
+  "backupTableBtn",
+  "restoreBackupBtn",
+  "logoutBtn",
+  "syncStudentsBtn",
+  "subjectLock"
+];
+  buttons.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  // 👇 TEACHER MODE = ONLY MARKS ENTRY
+  if (role === "teacher") {
+
+    const marks = document.getElementById("marksSection");
+    if (marks) marks.style.display = "block";
+    const lockBtn = document.getElementById("subjectLocksBtn");
+
+if(lockBtn){
+  lockBtn.style.display = "none";
+}
+
+    toast("Teacher mode: Marks entry only");
+  }
+
+  // 👇 ADMIN MODE = FULL ACCESS
+  else if (role === "admin") {
+
+    allPanels.forEach(name => {
+      const el = document.querySelector(`[data-panel="${name}"]`);
+      if (el) el.style.display = "block";
+    });
+const lockBtn = document.getElementById("subjectLocksBtn");
+
+if(lockBtn){
+  lockBtn.style.display = "block";
+}
+    buttons.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "block";
+    });
+
+    const marks = document.getElementById("marksSection");
+    if (marks) marks.style.display = "block";
+
+    toast("Admin mode: full access");
+  }
+}
+function logout() {
+
+  const confirmLogout = confirm("Are you sure you want to logout?");
+
+  if (!confirmLogout) return;
+
+  localStorage.removeItem("user");
+  localStorage.removeItem("schoolId");
+
+  window.location.href = "login.html";
+}
+function loadBackupTable() {
+  const file = document.getElementById("backupFile").files[0];
+
+  if (!file) {
+    toast("Select backup file first");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const data = JSON.parse(e.target.result);
+
+    let html = "";
+
+    for (let store in data) {
+
+      html += `<h3>${store}</h3>`;
+
+      const records = data[store];
+
+      if (!records || records.length === 0) {
+        html += "<p>No data</p>";
+        continue;
+      }
+
+      const headers = Object.keys(records[0]);
+
+      html += "<div class='table-wrap'><table><tr>";
+
+      headers.forEach(h => {
+        html += `<th>${h}</th>`;
+      });
+
+      html += "</tr>";
+
+      records.forEach(row => {
+        html += "<tr>";
+
+        headers.forEach(h => {
+          html += `<td>${row[h] ?? ""}</td>`;
+        });
+
+        html += "</tr>";
+      });
+
+      html += "</table></div><br>";
+    }
+
+    document.getElementById("backupOutput").innerHTML = html;
+  };
+
+  reader.readAsText(file);
+}
+function exportBackup() {
+  const dbName = "ExamDB";
+
+  const request = indexedDB.open(dbName);
+
+  request.onsuccess = function (event) {
+    const db = event.target.result;
+    const stores = Array.from(db.objectStoreNames);
+
+    let data = {};
+    let done = 0;
+
+    stores.forEach(storeName => {
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+
+      req.onsuccess = function () {
+        data[storeName] = req.result;
+        done++;
+
+        if (done === stores.length) {
+          const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json"
+          });
+
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "exam_backup.json";
+          a.click();
+
+          URL.revokeObjectURL(url);
+        }
+      };
+    });
+  };
+}
+
+function downloadFile(data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "exam_backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+function showBackupTable() {
+  const dbName = "ExamDB";
+
+  const request = indexedDB.open(dbName);
+
+  request.onsuccess = function (event) {
+    const db = event.target.result;
+    const stores = Array.from(db.objectStoreNames);
+
+    let html = "";
+
+    let done = 0;
+
+    if (stores.length === 0) {
+      document.getElementById("backupTableOutput").innerHTML = "No data found";
+      return;
+    }
+
+    stores.forEach(storeName => {
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+
+      req.onsuccess = function () {
+        const data = req.result;
+
+        html += `<h3>${storeName.toUpperCase()}</h3>`;
+
+        if (!data.length) {
+          html += "<p>No records</p>";
+        } else {
+          const headers = Object.keys(data[0]);
+
+          html += "<div class='table-wrap'><table><tr>";
+
+          headers.forEach(h => {
+            html += `<th>${h}</th>`;
+          });
+
+          html += "</tr>";
+
+          data.forEach(row => {
+            html += "<tr>";
+
+            headers.forEach(h => {
+              html += `<td>${row[h] ?? ""}</td>`;
+            });
+
+            html += "</tr>";
+          });
+
+          html += "</table></div><br>";
+        }
+
+        done++;
+
+        if (done === stores.length) {
+          document.getElementById("backupTableOutput").innerHTML = html;
+
+          // show panel
+          document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+          document.getElementById("backupTableArea").classList.add("active");
+        }
+      };
+    });
+  };
+}
+function restoreBackup() {
+  const fileInput = document.getElementById("restoreFile");
+
+  fileInput.click();
+
+  fileInput.onchange = function () {
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+
+        const request = indexedDB.open("ExamDB");
+
+        request.onsuccess = function (event) {
+          const db = event.target.result;
+
+          const stores = Object.keys(data);
+
+          let done = 0;
+
+          stores.forEach(storeName => {
+
+            const tx = db.transaction(storeName, "readwrite");
+            const store = tx.objectStore(storeName);
+
+            // ⚠️ CLEAR OLD DATA FIRST
+            store.clear();
+
+            data[storeName].forEach(item => {
+              store.put(item);
+            });
+
+            tx.oncomplete = function () {
+              done++;
+
+              if (done === stores.length) {
+                alert("Restore complete ✅");
+
+                // reload UI
+                location.reload();
+              }
+            };
+          });
+        };
+
+      } catch (err) {
+        alert("Invalid backup file ❌");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+}
+</script>
+</script>  </body>    
+</html>
